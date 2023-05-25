@@ -1,12 +1,24 @@
 import { Attendant } from './attendant.interface';
 
 export interface EventData {
-	attendants?: Attendant[];
+	attendees: Attendant[];
 	description: string;
-	endDate: string;
-	endTime: string;
+	end: {
+		dateTime: string;
+		timeZone: string;
+	};
+	start: {
+		dateTime: string;
+		timeZone: string;
+	};
 	id?: string;
-	startDate: string;
-	startTime: string;
-	title: string;
+	calendarEventId: string;
+	summary: string;
+	colorId?: string;
+	onUpdateButtonClick?: any;
+	location?: string;
+	coordinates?: {
+		long: number;
+		lat: number;
+	};
 }

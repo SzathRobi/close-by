@@ -13,8 +13,14 @@ interface InputProps {
 	min?: string | number;
 	value?: string | number;
 	name?: string;
+	placeholder?: string;
 	onIconClick?: any;
+	onClick?: any;
 	autofocus?: boolean;
+	onKeyDown?: any;
+	required?: boolean;
+	onFocus?: any;
+	onBlur?: any;
 }
 
 const Input = ({
@@ -22,38 +28,52 @@ const Input = ({
 	errorMessage,
 	icon = null,
 	min,
+	placeholder = '',
 	onChange = null,
 	ref = null,
 	type = 'text',
 	value,
 	name,
 	onIconClick = null,
-	autofocus = false
+	autofocus = false,
+	onKeyDown = null,
+	required = false,
+	onFocus = null,
+	onBlur = null,
+	onClick = null
 }: InputProps) => {
 	return (
-		<div className="h-16 relative">
+		<div className="relative">
 			<label>
 				<input
 					disabled={disabled}
+					required={required}
 					// ref={ref}
 					type={type}
+					placeholder={placeholder}
 					min={min}
 					name={name}
 					value={value}
+					onClick={onClick}
 					autoFocus={autofocus}
 					onChange={onChange}
+					onKeyDown={onKeyDown}
+					onFocus={onFocus}
+					onBlur={onBlur}
 					className={`w-full mb-1 shadow-md shadow-neutral-400 p-2 rounded ${
 						errorMessage && 'border-b-2 border-rose-600'
-					} ${disabled && 'shadow-none'}`}
+					} ${disabled && 'shadow-none border-none'}`}
 				/>
 			</label>
-			<button
-				type="button"
-				className="absolute right-2 top-2"
-				onClick={onIconClick}
-			>
-				{icon}
-			</button>
+			{icon && (
+				<button
+					type="button"
+					className="absolute right-2 top-2"
+					onClick={onIconClick}
+				>
+					{icon}
+				</button>
+			)}
 			{errorMessage && (
 				<p className="text-sm text-rose-600">{errorMessage}</p>
 			)}

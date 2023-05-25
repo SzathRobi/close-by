@@ -1,13 +1,29 @@
-import Link from 'next/link';
 import React from 'react';
 
-const Header = () => {
+interface HeaderProps {
+	onContactsClick: any;
+	onLogoutClick: any;
+}
+
+const Header = ({
+	onContactsClick = null,
+	onLogoutClick = null
+}: HeaderProps) => {
 	return (
-		<header className="w-full p-4 fixed top-0 left-0 z-50 bg-teal-500">
-			<nav className="w-full flex justify-evenly items-center text-white">
-				<Link href="/">Home1</Link>
-				<Link href="/">Home2</Link>
-				<Link href="/">Home3</Link>
+		<header className="w-full h-10 flex items-center justify-end absolute top-0 left-0 bg-emerald-500 shadow-md shadow-neutral-400 z-40">
+			<nav className="w-full mr-20 flex justify-end items-center gap-10">
+				<button
+					className="text-white hover:text-emerald-800 transition-colors"
+					onClick={() => onContactsClick()}
+				>
+					Kontaktok
+				</button>
+				<button
+					className="text-white hover:text-emerald-800 transition-colors"
+					onClick={() => onLogoutClick()}
+				>
+					Kijelentkezés
+				</button>
 			</nav>
 		</header>
 	);

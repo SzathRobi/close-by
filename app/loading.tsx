@@ -1,8 +1,9 @@
+import FullPageLoader from './components/loaders/full-page/full-page-loader';
+
 export default function Loading() {
-	// You can add any UI inside Loading, including a Skeleton.
 	return (
-		<div className="w-full h-screen flex items-center justify-center">
-			<p className="text-5xl">loading....</p>
+		<div className="flex h-screen w-full items-center justify-center">
+			<FullPageLoader />
 		</div>
 	);
 }

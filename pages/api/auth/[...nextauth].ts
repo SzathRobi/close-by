@@ -4,9 +4,8 @@ import GoogleProvider from 'next-auth/providers/google';
 export default NextAuth({
 	providers: [
 		GoogleProvider({
-			clientId:
-				'197585377787-1uv399s4q9f3quvssnidf2upqggiakjh.apps.googleusercontent.com',
-			clientSecret: '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',
+			clientId: process.env.GOOGLE_ID ?? '',
+			clientSecret: process.env.GOOGLE_SECRET ?? '',
 			authorization: {
 				params: {
 					scope: 'email profile https://www.googleapis.com/auth/calendar'
@@ -16,12 +15,7 @@ export default NextAuth({
 	],
 	secret: process.env.SECRET,
 	callbacks: {
-		async session({ session, token, user }: any) {
-			session.user.id = token.id;
-			session.accessToken = token.accessToken;
-			return session;
-		},
-		async jwt({ token, user, account, profile, isNewUser }) {
+		async jwt({ token, user, account }) {
 			if (user) {
 				token.id = user.id;
 			}
@@ -29,6 +23,12 @@ export default NextAuth({
 				token.accessToken = account.access_token;
 			}
 			return token;
+		},
+
+		async session({ session, token }: any) {
+			session.user.id = token.id;
+			session.accessToken = token.accessToken;
+			return session;
 		}
 	}
 });

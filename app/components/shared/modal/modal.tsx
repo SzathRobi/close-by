@@ -6,17 +6,19 @@ interface ModalProps {
 	closeModal: any;
 	isOpen: boolean;
 	title?: string;
+	subtitle?: string;
 }
 
 const Modal = ({
 	children,
 	closeModal,
 	isOpen,
-	title = 'Adj hozzá kettő tököt'
+	title,
+	subtitle
 }: ModalProps): any => {
 	return (
 		<Transition appear show={isOpen} as={Fragment}>
-			<Dialog as="div" className="relative z-10" onClose={closeModal}>
+			<Dialog as="div" className="relative z-50" onClose={closeModal}>
 				<Transition.Child
 					as={Fragment}
 					enter="ease-out duration-300"
@@ -40,30 +42,24 @@ const Modal = ({
 							leaveFrom="opacity-100 scale-100"
 							leaveTo="opacity-0 scale-95"
 						>
-							<Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-								<Dialog.Title
-									as="h3"
-									className="mb-2 text-lg font-medium leading-6 text-gray-900"
-								>
-									Mennyé szeggyé tököt!
-								</Dialog.Title>
-								<div className="mb-4">
-									<p className="text-sm text-gray-500">
-										Mennyé mennyé mé vagyol még itten koma?
-									</p>
-								</div>
+							<Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-4 text-left align-middle shadow-xl transition-all">
+								{title ? (
+									<Dialog.Title
+										as="h3"
+										className="mb-2 text-lg font-medium leading-6 text-gray-900"
+									>
+										{title}
+									</Dialog.Title>
+								) : null}
+								{subtitle ? (
+									<div className="mb-4">
+										<p className="text-sm text-gray-500">
+											{subtitle}
+										</p>
+									</div>
+								) : null}
 
 								{children}
-
-								<div className="mt-4">
-									<button
-										type="button"
-										className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-										onClick={closeModal}
-									>
-										jóvan, megyek!
-									</button>
-								</div>
 							</Dialog.Panel>
 						</Transition.Child>
 					</div>

@@ -1,5 +1,4 @@
 import { Attendant } from '@/app/interfaces/attendant.interface';
-import { AttendantStatusHun } from '@/app/types/attendant-status.type';
 import React from 'react';
 
 interface AttendantProps {
@@ -13,7 +12,7 @@ const AttendantCard = ({ attendant }: AttendantProps) => {
 		return 'text-green-700';
 	};
 	return (
-		<article className="p-2 mb-4 rounded-lg shadow-md shadow-neutral-500">
+		<article className="mb-4 rounded-lg p-2 shadow-md shadow-neutral-500">
 			<p>{attendant.email}</p>
 			<p className={statusColor()}>{attendant.status}</p>
 		</article>

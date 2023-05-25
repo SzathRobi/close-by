@@ -2,6 +2,7 @@ import React from 'react';
 
 type Size = 'sm' | 'md' | 'lg';
 type ButtonType = 'button' | 'submit';
+type ButtonStatus = 'error' | 'idle' | 'success' | 'warning';
 
 interface ButtonProps {
 	disabled?: boolean;
@@ -12,6 +13,9 @@ interface ButtonProps {
 	size?: Size;
 	text: string;
 	type: ButtonType;
+	status?: ButtonStatus;
+	className?: string;
+	error?: boolean;
 }
 
 const Button = ({
@@ -21,26 +25,39 @@ const Button = ({
 	secondary = false,
 	size = 'md',
 	text,
-	type
+	type,
+	status = 'idle',
+	error = false,
+	className = ''
 }: ButtonProps) => {
 	return (
 		<button
 			type={type}
 			disabled={disabled}
 			onClick={onClick}
-			className={`flex items-center justify-center py-1 px-4 text-white rounded shadow-sm shadow-gray-800 ${
-				secondary
-					? 'bg-white text-cyan-600 border border-cyan-600'
-					: 'bg-cyan-600'
-			} ${disabled && 'bg-gray-500'} ${
+			className={`${className} flex items-center justify-center gap-2 py-1 rounded-full shadow-sm shadow-gray-800 transition-colors  ${
+				secondary &&
+				!error &&
+				'bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-700'
+			} ${
+				error && 'border border-red-600 hover:bg-red-50 text-red-600'
+			} ${disabled && 'bg-gray-500 text-white'} 
+			${
+				!error &&
+				!secondary &&
+				!disabled &&
+				'bg-emerald-700 hover:bg-emerald-800 text-white'
+			}
+			${
 				size === 'sm'
-					? 'text-sm'
+					? 'text-sm px-6 md:px-8'
 					: text === 'md'
-					? 'text-base'
-					: 'text-lg'
+					? 'text-sm md:text-base px-6 md::px-14'
+					: 'text-base px-6 md:px-14'
 			}`}
 		>
 			<span>{text}</span>
+			{icon ? <span>{icon}</span> : null}
 		</button>
 	);
 };

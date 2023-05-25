@@ -11,22 +11,28 @@
   "dependencies": {
     "@headlessui/react": "^1.7.8",
     "@next/font": "13.1.5",
+    "@types/mapbox-gl": "^2.7.10",
     "@types/node": "18.11.18",
     "@types/react": "18.0.27",
     "@types/react-dom": "18.0.10",
     "eslint": "8.32.0",
     "eslint-config-next": "13.1.5",
+    "mapbox-gl": "^2.13.0",
+    "mongodb": "^5.3.0",
     "next": "13.1.5",
     "next-auth": "^4.18.10",
     "next-pwa": "^5.6.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-icons": "^4.7.1",
+    "react-map-gl": "^7.0.21",
     "typescript": "4.9.4"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.21",
+    "prettier": "^2.8.8",
+    "prettier-plugin-tailwindcss": "^0.3.0",
     "tailwindcss": "^3.2.4"
   }
 }
