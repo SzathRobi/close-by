@@ -396,6 +396,10 @@ export default function Home() {
 	};
 
 	const isAccesTokenValid = (): boolean => {
+		if (!session || session?.expires) {
+			return false;
+		}
+
 		const now = new Date(Date.now()).getTime();
 		const expirationTime = new Date(session.expires).getTime();
 
