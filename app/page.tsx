@@ -396,7 +396,7 @@ export default function Home() {
 	};
 
 	const isAccesTokenValid = (): boolean => {
-		if (!session || session?.expires) {
+		if (!session || !session?.expires) {
 			return false;
 		}
 
@@ -411,7 +411,6 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		console.log(session);
 		if (!isAccesTokenValid()) {
 			signIn();
 			return;
