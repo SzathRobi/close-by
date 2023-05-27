@@ -396,10 +396,6 @@ export default function Home() {
 	};
 
 	const isAccesTokenValid = (): boolean => {
-		if (!session) {
-			return false;
-		}
-
 		const now = new Date(Date.now()).getTime();
 		const expirationTime = new Date(session.expires).getTime();
 
@@ -411,30 +407,32 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		if (!isAccesTokenValid()) {
-			signIn();
-			return;
-		}
+		if (session) {
+			if (!isAccesTokenValid()) {
+				signIn();
+				return;
+			}
 
-		if ('geolocation' in navigator) {
-			navigator.geolocation.getCurrentPosition(({ coords }) => {
-				const { latitude, longitude } = coords;
-				setUserLocation({ lat: latitude, long: longitude });
+			if ('geolocation' in navigator) {
+				navigator.geolocation.getCurrentPosition(({ coords }) => {
+					const { latitude, longitude } = coords;
+					setUserLocation({ lat: latitude, long: longitude });
+				});
+			}
+
+			getUpcomingEvents(session.accessToken, session.user.email).then(
+				(currentEvents: EventData[]) => {
+					setEvents(currentEvents);
+					setEventsBackup(currentEvents);
+				}
+			);
+
+			getContactsInDb().then((contacts) => {
+				setContacts(contacts);
+				setFilterableContacts(contacts);
 			});
 		}
-
-		getUpcomingEvents(session.accessToken, session.user.email).then(
-			(currentEvents: EventData[]) => {
-				setEvents(currentEvents);
-				setEventsBackup(currentEvents);
-			}
-		);
-
-		getContactsInDb().then((contacts) => {
-			setContacts(contacts);
-			setFilterableContacts(contacts);
-		});
-	}, []);
+	}, [session]);
 
 	useEffect(() => {
 		if (userLocation) {
