@@ -505,7 +505,8 @@ export default function Home() {
 		updateEventFilter();
 	}, [eventFilter]);
 
-	if (!session?.user ?? true) {
+	if (!session?.user) {
+		signIn();
 		return;
 	}
 
