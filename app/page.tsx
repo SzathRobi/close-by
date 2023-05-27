@@ -407,7 +407,7 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		if (session || session?.user) {
+		if (session) {
 			if (!isAccesTokenValid()) {
 				signIn();
 				return;
@@ -504,6 +504,12 @@ export default function Home() {
 	useEffect(() => {
 		updateEventFilter();
 	}, [eventFilter]);
+
+	useEffect(() => {
+		if (!session?.user) {
+			signIn();
+		}
+	}, [session]);
 
 	return (
 		<>
