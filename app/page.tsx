@@ -408,10 +408,10 @@ export default function Home() {
 
 	useEffect(() => {
 		if (session) {
-			if (!isAccesTokenValid()) {
-				signIn();
-				return;
-			}
+			// if (!isAccesTokenValid()) {
+			// 	signIn();
+			// 	return;
+			// }
 
 			if ('geolocation' in navigator) {
 				navigator.geolocation.getCurrentPosition(({ coords }) => {
