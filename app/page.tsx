@@ -28,6 +28,7 @@ import SearchInput from './components/shared/search-input/search-input';
 import { Listbox, Transition } from '@headlessui/react';
 import { RiArrowUpDownLine } from 'react-icons/ri';
 import { Comment } from './interfaces/comment.interface';
+import { useRouter } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -37,6 +38,7 @@ export default function Home() {
 	const mapboxIsochroneProfile = 'driving-traffic';
 
 	const { data: session }: any = useSession();
+	const router = useRouter();
 
 	const [isMapUtilityOpen, setIsMapUtilityOpen] = useState<boolean>(true);
 	const [clickedMarkerData, setClickMarkerData] = useState<EventData | null>(
@@ -407,9 +409,13 @@ export default function Home() {
 	};
 
 	useEffect(() => {
+		if (!session) {
+			router.push('/auth/login');
+		}
+
 		if (session) {
 			if (!session?.user || !isAccesTokenValid()) {
-				signIn();
+				signOut({ redirect: false, callbackUrl: '/auth/login' });
 				return;
 			}
 
@@ -509,7 +515,9 @@ export default function Home() {
 		<>
 			<Header
 				onContactsClick={openContactModal}
-				onLogoutClick={signOut}
+				onLogoutClick={() =>
+					signOut({ redirect: false, callbackUrl: '/auth/login' })
+				}
 			/>
 			<main className="relative bottom-24 flex flex-col-reverse items-start justify-center overflow-hidden lg:bottom-0 lg:h-screen lg:flex-row">
 				<section className="mt-11 flex h-full w-full flex-col items-start gap-6 lg:w-[30%] lg:border lg:py-6 lg:pl-2">
