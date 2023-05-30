@@ -421,12 +421,14 @@ export default function Home() {
 				});
 			}
 
-			getUpcomingEvents(session.accessToken, session.user.email).then(
-				(currentEvents: EventData[]) => {
+			getUpcomingEvents(session.accessToken, session.user.email)
+				.then((currentEvents: EventData[]) => {
 					setEvents(currentEvents);
 					setEventsBackup(currentEvents);
-				}
-			);
+				})
+				.catch(() => {
+					signOut({ redirect: false, callbackUrl: '/auth/login' });
+				});
 
 			getContactsInDb().then((contacts) => {
 				setContacts(contacts);
@@ -501,10 +503,6 @@ export default function Home() {
 			setEvents(filteredEvents);
 		}
 	};
-
-	useEffect(() => {
-		console.log('session is:', session);
-	}, [session]);
 
 	useEffect(() => {
 		updateEventFilter();
