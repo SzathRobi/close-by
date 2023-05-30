@@ -410,7 +410,7 @@ export default function Home() {
 
 	useEffect(() => {
 		if (!session?.user) {
-			router.push('/auth/login');
+			signOut({ callbackUrl: '/auth/login' });
 		}
 
 		if (session) {
