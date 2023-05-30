@@ -409,9 +409,11 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		if (!session?.user) {
-			signOut({ callbackUrl: '/auth/login' });
-		}
+		setTimeout(() => {
+			if (!session?.user) {
+				signIn();
+			}
+		}, 100);
 
 		if (session) {
 			if ('geolocation' in navigator) {
