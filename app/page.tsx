@@ -37,7 +37,14 @@ export default function Home() {
 		'https://api.mapbox.com/isochrone/v1/mapbox/';
 	const mapboxIsochroneProfile = 'driving-traffic';
 
-	const { data: session }: any = useSession();
+	const { data: session, status }: any = useSession({
+		required: true,
+		onUnauthenticated() {
+			signIn();
+			// The user is not authenticated, handle it here.
+		}
+	});
+
 	const router = useRouter();
 
 	const [isMapUtilityOpen, setIsMapUtilityOpen] = useState<boolean>(true);
@@ -409,12 +416,6 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		setTimeout(() => {
-			if (!session?.user) {
-				signIn();
-			}
-		}, 100);
-
 		if (session) {
 			if ('geolocation' in navigator) {
 				navigator.geolocation.getCurrentPosition(({ coords }) => {
