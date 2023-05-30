@@ -9,11 +9,12 @@ const LoginPage = () => {
 	const { data: session }: any = useSession();
 	const router = useRouter();
 
-	// useEffect(() => {
-	// 	if (session) {
-	// 		router.push('/');
-	// 	}
-	// }, [session]);
+	useEffect(() => {
+		signIn();
+		// if (session) {
+		// 	router.push('/');
+		// }
+	}, []);
 
 	return (
 		<div className="flex h-screen w-full items-center justify-center">
