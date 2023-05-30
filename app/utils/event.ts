@@ -40,9 +40,7 @@ export const getEvents = async (
 			new URLSearchParams({
 				maxResults: '200',
 				timeMin: `${currentYear}-${previousThirdMonth}-01T10:00:00-07:00`,
-				timeMax: `${currentYear}-${currentMonth}-${
-					currentDay + 3
-				}T10:00:00-07:00`,
+				timeMax: `${currentYear}-${currentMonth}-${currentDay}T10:00:00-07:00`,
 				showDeleted: 'false',
 				singleEvents: 'true',
 				orderBy: 'startTime'
