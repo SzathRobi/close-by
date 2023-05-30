@@ -12,6 +12,8 @@ const LoginPage = () => {
 	useEffect(() => {
 		if (session) {
 			router.push('/');
+		} else {
+			signIn('google', { callbackUrl: '/' });
 		}
 	}, [session]);
 
@@ -20,7 +22,7 @@ const LoginPage = () => {
 			<form>
 				<button
 					className="flex items-center justify-center gap-2 rounded border border-gray-500 py-2 px-4 transition-colors hover:bg-gray-200"
-					onClick={() => signIn()}
+					onClick={() => signIn('google', { callbackUrl: '/' })}
 				>
 					Bejelentkezés google fiókkal
 					<FaGoogle />
