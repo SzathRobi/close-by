@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession, signIn, signOut } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { FaGoogle } from 'react-icons/fa';
@@ -9,17 +9,17 @@ const LoginPage = () => {
 	const { data: session }: any = useSession();
 	const router = useRouter();
 
-	useEffect(() => {
-		if (session) {
-			router.push('/');
-		}
-	}, [session]);
+	// useEffect(() => {
+	// 	if (session) {
+	// 		router.push('/');
+	// 	}
+	// }, [session]);
 
 	return (
-		<div className="w-full h-screen flex items-center justify-center">
+		<div className="flex h-screen w-full items-center justify-center">
 			<form>
 				<button
-					className="py-2 px-4 rounded border border-gray-500 flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+					className="flex items-center justify-center gap-2 rounded border border-gray-500 py-2 px-4 transition-colors hover:bg-gray-200"
 					onClick={() => signIn()}
 				>
 					Bejelentkezés google fiókkal
