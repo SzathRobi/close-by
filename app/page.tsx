@@ -409,17 +409,13 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		if (!session) {
+		if (!session?.user) {
+			alert('BAD');
+
 			router.push('/auth/login');
 		}
 
 		if (session) {
-			// if (!session?.user || !isAccesTokenValid()) {
-			if (!session?.user) {
-				signOut({ callbackUrl: '/auth/login' });
-				return;
-			}
-
 			if ('geolocation' in navigator) {
 				navigator.geolocation.getCurrentPosition(({ coords }) => {
 					const { latitude, longitude } = coords;
