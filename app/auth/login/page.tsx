@@ -15,7 +15,7 @@ const LoginPage = () => {
 		} else {
 			signIn('google', { callbackUrl: '/' });
 		}
-	}, [session]);
+	}, []);
 
 	return (
 		<div className="flex h-screen w-full items-center justify-center">
