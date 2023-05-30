@@ -56,7 +56,7 @@ export const getEvents = async (
 	);
 
 	const eventsData = await res.json();
-	const events = (await eventsData?.items?.reverse()) ?? [];
+	const events = await eventsData?.items?.reverse();
 	const eventCoordinates = await getEventCoordinates(events);
 
 	const mappedEvents = await events.map((event: any, index: number) => {
