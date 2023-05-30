@@ -12,10 +12,8 @@ const LoginPage = () => {
 	useEffect(() => {
 		if (session) {
 			router.push('/');
-		} else {
-			signIn();
 		}
-	}, []);
+	}, [session]);
 
 	return (
 		<div className="flex h-screen w-full items-center justify-center">
