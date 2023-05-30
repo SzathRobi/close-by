@@ -10,10 +10,11 @@ const LoginPage = () => {
 	const router = useRouter();
 
 	useEffect(() => {
-		signIn();
-		// if (session) {
-		// 	router.push('/');
-		// }
+		if (session) {
+			router.push('/');
+		} else {
+			signIn();
+		}
 	}, []);
 
 	return (

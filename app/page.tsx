@@ -410,8 +410,6 @@ export default function Home() {
 
 	useEffect(() => {
 		if (!session?.user) {
-			alert('BAD');
-
 			router.push('/auth/login');
 		}
 
@@ -503,6 +501,10 @@ export default function Home() {
 			setEvents(filteredEvents);
 		}
 	};
+
+	useEffect(() => {
+		console.log('session is:', session);
+	}, [session]);
 
 	useEffect(() => {
 		updateEventFilter();

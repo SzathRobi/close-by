@@ -39,7 +39,7 @@ export const getEvents = async (
 		`${BASE_CALENDAR_URL}/${email}/events?` +
 			new URLSearchParams({
 				maxResults: '200',
-				timeMin: `${currentYear}-${previousThirdMonth}-${currentDay}T10:00:00-07:00`,
+				timeMin: `${currentYear}-${previousThirdMonth}-01T10:00:00-07:00`,
 				timeMax: `${currentYear}-${currentMonth}-${
 					currentDay + 3
 				}T10:00:00-07:00`,
@@ -56,7 +56,7 @@ export const getEvents = async (
 	);
 
 	const eventsData = await res.json();
-	const events = await eventsData?.items?.reverse();
+	const events = await eventsData.items.reverse();
 	const eventCoordinates = await getEventCoordinates(events);
 
 	const mappedEvents = await events.map((event: any, index: number) => {
