@@ -414,8 +414,9 @@ export default function Home() {
 		}
 
 		if (session) {
-			if (!session?.user || !isAccesTokenValid()) {
-				signOut({ redirect: false, callbackUrl: '/auth/login' });
+			// if (!session?.user || !isAccesTokenValid()) {
+			if (!session?.user) {
+				signOut({ callbackUrl: '/auth/login' });
 				return;
 			}
 
