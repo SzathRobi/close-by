@@ -34,8 +34,8 @@ const Select = ({ label, selectValue, setSelectValue }: SelectProps) => {
 		if (color === 'red') {
 			return 'before:bg-red-400';
 		}
-		if (color === 'indigo') {
-			return 'before:bg-indigo-400';
+		if (color === 'gray') {
+			return 'before:bg-gray-400';
 		}
 
 		return 'bg-blue-400';
@@ -48,8 +48,8 @@ const Select = ({ label, selectValue, setSelectValue }: SelectProps) => {
 		if (color === 'red') {
 			return 'bg-red-400';
 		}
-		if (color === 'indigo') {
-			return 'bg-indigo-400';
+		if (color === 'gray') {
+			return 'bg-gray-400';
 		}
 
 		return 'bg-blue-400';

@@ -1,20 +1,39 @@
+import React from 'react';
 import { BsPencil } from 'react-icons/bs';
-
-import { EventData } from '@/app/interfaces/event-data.interface';
-import Button from '../shared/button/button';
 import { FaMapMarkedAlt } from 'react-icons/fa';
+import { EventData } from '@/app/interfaces/event-data.interface';
+
+import Button from '../shared/button/button';
 
 interface EventCardProps {
 	eventData: EventData;
 	onUpdateButtonClick: any;
 	onMarkerOpen: any;
+	searchValue: string;
 }
 
 const EventCard = ({
 	eventData,
 	onUpdateButtonClick,
-	onMarkerOpen
+	onMarkerOpen,
+	searchValue
 }: EventCardProps) => {
+	const getHighlightedText = (text: string = '') => {
+		// Split text on higlight term, include term itself into parts, ignore case
+		let parts = text.split(new RegExp(`(${searchValue})`, 'gi'));
+		return parts.map((part, index) => (
+			<React.Fragment key={index}>
+				{part.toLowerCase() === searchValue.toLowerCase() ? (
+					<b className="rounded bg-orange-400 bg-opacity-50">
+						{part}
+					</b>
+				) : (
+					part
+				)}
+			</React.Fragment>
+		));
+	};
+
 	const startDate = eventData.start.dateTime.split('T')[0];
 	const startTime = eventData.start.dateTime.split('T')[1].slice(0, 5);
 	const endTime = eventData.end.dateTime.split('T')[1].slice(0, 5);
@@ -28,8 +47,11 @@ const EventCard = ({
 		if (color === '11') {
 			return 'bg-red-400';
 		}
+		if (color === '8') {
+			return 'bg-gray-500';
+		}
 		if (color === '1') {
-			return 'bg-indigo-400';
+			return 'bg-purple-300';
 		}
 
 		return 'bg-blue-400';
@@ -43,13 +65,15 @@ const EventCard = ({
 				)}`}
 			></div>
 			<p className="mb-2 text-sm text-gray-600">
-				{eventData.location || 'nincs megadva helyszín'}
+				{getHighlightedText(
+					eventData.location || 'nincs megadva helyszín'
+				)}
 			</p>
 			<div className="mb-4">
 				<h4 className="mb-2 text-xl font-medium">
-					{eventData.summary}
+					{getHighlightedText(eventData.summary)}
 				</h4>
-				<p>{eventData.description}</p>
+				<p>{getHighlightedText(eventData.description)}</p>
 			</div>
 
 			<div className="items center mb-4 flex justify-start gap-4">

@@ -1,5 +1,6 @@
 'use client';
 
+import { ContactLocation } from '@/app/interfaces/contact-location.interface';
 import { Contact } from '@/app/interfaces/contact.interface';
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
@@ -16,27 +17,78 @@ const AddContactForm = ({ addContact }: AddContactFormProps) => {
 	const [name, setName] = useState<string>('');
 	const [email, setEmail] = useState<string>('');
 	const [phoneNumber, setPhoneNumber] = useState<string>('');
+	const [location, setLocation] = useState<ContactLocation | undefined>(
+		undefined
+	);
 
 	const onSubmit = async (event: any) => {
 		event.preventDefault();
 
-		const newContact: Contact = {
+		let newContact: Contact = {
 			email,
 			name,
-			phoneNumber
+			phoneNumber,
+			location
 		};
 
-		let res = await fetch('/api/contacts', {
-			method: 'POST',
-			body: JSON.stringify(newContact)
-		});
-		res = await res.json();
+		if (location?.locationName.length) {
+			const response = await fetch(
+				`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.locationName}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
+			);
 
-		addContact(newContact);
+			const data = await response.json();
 
-		setName('');
-		setEmail('');
-		setPhoneNumber('');
+			setLocation({
+				...location,
+				coordinates: {
+					longitude: data.features[0].center[0],
+					latitude: data.features[0].center[1]
+				}
+			});
+
+			newContact = {
+				...newContact,
+				location: {
+					locationName: location.locationName,
+					coordinates: {
+						longitude: data.features[0].center[0],
+						latitude: data.features[0].center[1]
+					}
+				}
+			};
+
+			let res = await fetch('/api/contacts', {
+				method: 'POST',
+				body: JSON.stringify(newContact)
+			});
+			res = await res.json();
+
+			addContact(newContact);
+
+			setName('');
+			setEmail('');
+			setPhoneNumber('');
+			setLocation({
+				locationName: '',
+				coordinates: undefined
+			});
+		} else {
+			let res = await fetch('/api/contacts', {
+				method: 'POST',
+				body: JSON.stringify(newContact)
+			});
+			res = await res.json();
+
+			addContact(newContact);
+
+			setName('');
+			setEmail('');
+			setPhoneNumber('');
+			setLocation({
+				locationName: '',
+				coordinates: undefined
+			});
+		}
 	};
 
 	return (
@@ -71,6 +123,19 @@ const AddContactForm = ({ addContact }: AddContactFormProps) => {
 					value={phoneNumber}
 					onChange={(event: any) =>
 						setPhoneNumber(event.target.value)
+					}
+				/>
+			</div>
+			<div className="mb-2">
+				<h4>Helyszín</h4>
+				<Input
+					name="location"
+					value={location?.locationName}
+					onChange={(event: any) =>
+						setLocation({
+							coordinates: undefined,
+							locationName: event.target.value
+						})
 					}
 				/>
 			</div>

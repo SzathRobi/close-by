@@ -32,7 +32,7 @@ export const getEvents = async (
 
 	const currentYear = date.getFullYear();
 	const currentMonth = `0${date.getMonth() + 1}`;
-	const previousThirdMonth = `0${date.getMonth() - 2}`;
+	const previousThirdMonth = `0${date.getMonth() - 3}`;
 	const currentDay = date.getDate();
 
 	const res = await fetch(

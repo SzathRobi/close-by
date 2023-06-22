@@ -14,6 +14,7 @@ interface ContactContanerProps {
 	updateContactName: any;
 	updateContactPhoneNumber: any;
 	updateContactEmail: any;
+	updateContactLocation: any;
 	closeContactModal: any;
 	deleteContactByIndex: any;
 	updateContactByIndex: any;
@@ -26,6 +27,7 @@ const ContactContaner = ({
 	deleteContactByIndex,
 	updateContactByIndex,
 	updateContactEmail,
+	updateContactLocation,
 	updateContactName,
 	updateContactPhoneNumber
 }: ContactContanerProps) => {
@@ -77,6 +79,7 @@ const ContactContaner = ({
 							deleteContactByIndex={deleteContactByIndex}
 							updateContactByIndex={updateContactByIndex}
 							updateContactEmail={updateContactEmail}
+							updateContactLocation={updateContactLocation}
 							updateContactName={updateContactName}
 							updateContactPhoneNumber={updateContactPhoneNumber}
 						/>

@@ -1,4 +1,4 @@
 export interface EventType {
-	type: 'Esemény' | 'Hívandó' | 'Kitöltendő';
-	color: 'blue' | 'red' | 'indigo';
+	type: 'Esemény' | 'Hívandó' | 'Kérdőív';
+	color: 'blue' | 'red' | 'gray';
 }

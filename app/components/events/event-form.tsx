@@ -107,7 +107,7 @@ const EventForm = ({
 			return '11';
 		}
 
-		if (color === 'indigo') {
+		if (color === 'gray') {
 			return '1';
 		}
 

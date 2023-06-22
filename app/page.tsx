@@ -29,6 +29,7 @@ import { Listbox, Transition } from '@headlessui/react';
 import { RiArrowUpDownLine } from 'react-icons/ri';
 import { Comment } from './interfaces/comment.interface';
 import { useRouter } from 'next/navigation';
+import ContactMapMarker from './components/map/map-marker/contact-map-marker';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -48,9 +49,9 @@ export default function Home() {
 	const router = useRouter();
 
 	const [isMapUtilityOpen, setIsMapUtilityOpen] = useState<boolean>(true);
-	const [clickedMarkerData, setClickMarkerData] = useState<EventData | null>(
-		null
-	);
+	const [clickedMarkerData, setClickMarkerData] = useState<
+		EventData | Contact | null
+	>(null);
 	const [events, setEvents] = useState<EventData[]>([]);
 	const [eventsBackup, setEventsBackup] = useState<EventData[]>([]);
 
@@ -71,9 +72,20 @@ export default function Home() {
 		null
 	);
 
+	const [latitude, setLatitude] = useState<number>(47.5);
+	const [longitude, setLongitude] = useState<number>(19);
+	const [zoom, setZoom] = useState<number>(10);
+	const [viewport, setViewport] = useState({
+		latitude: 47.5,
+		longitude: 19,
+		zoom: 10
+	});
+
 	const [contacts, setContacts] = useState<Contact[]>([]);
 	const [isContactListOpen, setIsContactListOpen] = useState<boolean>(false);
 	const [filterableContacts, setFilterableContacts] = useState<Contact[]>([]);
+
+	const [commentsFromDb, setCommentsFromDb] = useState<Comment[]>([]);
 
 	const [searchInputValue, setSearchInputValue] = useState<string>('');
 
@@ -86,8 +98,8 @@ export default function Home() {
 	const getEventType = (event: EventData) =>
 		event?.colorId === '11'
 			? 'Hívandó'
-			: event?.colorId === '1'
-			? 'Kitöltendő'
+			: event?.colorId === '8'
+			? 'Kérdőív'
 			: 'Esemény';
 
 	const onSearchEvent = async (event: any) => {
@@ -95,90 +107,129 @@ export default function Home() {
 
 		const searchText: string = event.target.search.value;
 
-		const response = await fetch(
-			`https://api.mapbox.com/geocoding/v5/mapbox.places/${searchText}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
+		if (searchText.length === 0) {
+			setEvents([...eventsBackup]);
+			return;
+		}
+
+		let searchLocation: any;
+		let hasError = false;
+
+		try {
+			const response = await fetch(
+				`https://api.mapbox.com/geocoding/v5/mapbox.places/${searchText}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
+			);
+			const data = await response.json();
+
+			searchLocation = {
+				long: data.features[0].center[0],
+				lat: data.features[0].center[1]
+			};
+		} catch (error) {
+			hasError = true;
+		}
+
+		let filteredEvents = eventsBackup.filter(
+			(eventData: EventData) =>
+				eventData?.location
+					?.toLocaleLowerCase()
+					.includes(searchText.toLowerCase()) ||
+				eventData?.summary
+					?.toLocaleLowerCase()
+					.includes(searchText.toLowerCase()) ||
+				eventData?.description
+					?.toLocaleLowerCase()
+					.includes(searchText.toLowerCase())
 		);
 
-		const data = await response.json();
-		const searchLocation = {
-			long: data.features[0].center[0],
-			lat: data.features[0].center[1]
-		};
+		if (eventFilter !== 'Összes') {
+			filteredEvents = filteredEvents.filter(
+				(eventData: EventData) =>
+					getEventType(eventData) === eventFilter
+			);
+		}
 
-		const filteredEvents =
-			eventFilter === 'Összes'
-				? events.filter((event) =>
-						event.location
-							?.toLowerCase()
-							.includes(searchText.toLowerCase())
-				  )
-				: events.filter(
-						(event: EventData) =>
-							event.location
-								?.toLowerCase()
-								.includes(searchText.toLowerCase()) &&
-							getEventType(event) === eventFilter
-				  );
+		// const filteredEvents =
+		// 	eventFilter === 'Összes'
+		// 		? eventsBackup.filter((event) =>
+		// 				event.location
+		// 					?.toLowerCase()
+		// 					.includes(searchText.toLowerCase())
+		// 		  )
+		// 		: eventsBackup.filter(
+		// 				(event: EventData) =>
+		// 					event.location
+		// 						?.toLowerCase()
+		// 						.includes(searchText.toLowerCase()) &&
+		// 					getEventType(event) === eventFilter
+		// 		  );
 
-		const eventsWithoutSearchedLoaction = events.filter(
-			(eventData: EventData) => !eventData.location?.includes(searchText)
+		const eventsWithoutSearchedLoaction = eventsBackup.filter(
+			(eventData: EventData) =>
+				!eventData.location
+					?.toLowerCase()
+					.includes(searchText.toLowerCase())
 		);
 
-		const getNearbyLocations = eventsWithoutSearchedLoaction.filter(
-			(event: EventData) => {
-				// centertől észak - nyugatra
-				if (
-					searchLocation &&
-					event.coordinates &&
-					searchLocation?.lat > event.coordinates?.lat &&
-					searchLocation.long > event.coordinates?.long
-				) {
-					return (
-						searchLocation.long - event.coordinates.long < 0.65 &&
-						searchLocation.lat - event.coordinates.lat < 0.35
-					);
-				}
+		const getNearbyLocations = hasError
+			? []
+			: eventsWithoutSearchedLoaction.filter((event: EventData) => {
+					// centertől észak - nyugatra
+					if (
+						searchLocation &&
+						event.coordinates &&
+						searchLocation?.lat > event.coordinates?.lat &&
+						searchLocation.long > event.coordinates?.long
+					) {
+						return (
+							searchLocation.long - event.coordinates.long <
+								0.65 &&
+							searchLocation.lat - event.coordinates.lat < 0.35
+						);
+					}
 
-				// centertől észak - kelet
-				if (
-					searchLocation &&
-					event.coordinates &&
-					searchLocation?.lat < event.coordinates?.lat &&
-					searchLocation.long > event.coordinates?.long
-				) {
-					return (
-						searchLocation.long - event.coordinates.long < 0.65 &&
-						event.coordinates.lat - searchLocation.lat < 0.35
-					);
-				}
+					// centertől észak - kelet
+					if (
+						searchLocation &&
+						event.coordinates &&
+						searchLocation?.lat < event.coordinates?.lat &&
+						searchLocation.long > event.coordinates?.long
+					) {
+						return (
+							searchLocation.long - event.coordinates.long <
+								0.65 &&
+							event.coordinates.lat - searchLocation.lat < 0.35
+						);
+					}
 
-				// centertől dél - kelet
-				if (
-					searchLocation &&
-					event.coordinates &&
-					searchLocation?.lat < event.coordinates?.lat &&
-					searchLocation.long < event.coordinates?.long
-				) {
-					return (
-						event.coordinates.long - searchLocation.long < 0.65 &&
-						event.coordinates.lat - searchLocation.lat < 0.35
-					);
-				}
+					// centertől dél - kelet
+					if (
+						searchLocation &&
+						event.coordinates &&
+						searchLocation?.lat < event.coordinates?.lat &&
+						searchLocation.long < event.coordinates?.long
+					) {
+						return (
+							event.coordinates.long - searchLocation.long <
+								0.65 &&
+							event.coordinates.lat - searchLocation.lat < 0.35
+						);
+					}
 
-				// centertől dél - nyugat
-				if (
-					searchLocation &&
-					event.coordinates &&
-					searchLocation?.lat > event.coordinates?.lat &&
-					searchLocation.long < event.coordinates?.long
-				) {
-					return (
-						event.coordinates.long - searchLocation.long < 0.65 &&
-						searchLocation.lat - event.coordinates.lat < 0.35
-					);
-				}
-			}
-		);
+					// centertől dél - nyugat
+					if (
+						searchLocation &&
+						event.coordinates &&
+						searchLocation?.lat > event.coordinates?.lat &&
+						searchLocation.long < event.coordinates?.long
+					) {
+						return (
+							event.coordinates.long - searchLocation.long <
+								0.65 &&
+							searchLocation.lat - event.coordinates.lat < 0.35
+						);
+					}
+			  });
 
 		setNearbyLocations(getNearbyLocations);
 
@@ -190,19 +241,17 @@ export default function Home() {
 
 		if (event.target.value.length === 0) {
 			setNearbyLocations(null);
-			return;
-		}
 
-		if (eventFilter === 'Összes') {
-			setEvents(eventsBackup);
-			return;
+			if (eventFilter === 'Összes') {
+				setEvents(eventsBackup);
+			} else {
+				const filteredEvents = eventsBackup.filter(
+					(eventData: EventData) =>
+						getEventType(eventData) === eventFilter
+				);
+				setEvents(filteredEvents);
+			}
 		}
-
-		const filteredEvents = [...eventsBackup];
-		filteredEvents.filter(
-			(event: EventData) => getEventType(event) === eventFilter
-		);
-		setEvents(filteredEvents);
 	};
 
 	const getContactsInDb = async () => {
@@ -212,6 +261,20 @@ export default function Home() {
 		// setContactsInDb(data.contacts);
 		// setContacts();
 		return data.contacts;
+	};
+
+	const onContactMarkerOpen = (event: any, contact: Contact) => {
+		event.originalEvent.stopPropagation();
+
+		setClickMarkerData(contact);
+		if (
+			contact.location?.coordinates?.latitude &&
+			contact.location?.coordinates?.longitude
+		) {
+			setLatitude(Number(contact.location.coordinates.latitude));
+			setLongitude(Number(contact.location.coordinates.longitude));
+			setZoom(10);
+		}
 	};
 
 	const onMarkerOpen = (
@@ -224,6 +287,11 @@ export default function Home() {
 		}
 
 		setClickMarkerData(eventData);
+		if (eventData.coordinates?.lat && eventData.coordinates?.long) {
+			setLatitude(eventData.coordinates.lat);
+			setLongitude(eventData.coordinates.long);
+			setZoom(10);
+		}
 	};
 
 	const onMarkerClose = () => {
@@ -233,7 +301,6 @@ export default function Home() {
 	const addNewEvent = (newEvent: EventData) => {
 		const newEvents = [newEvent, ...events];
 
-		// TODO: sort events by date
 		setEvents(newEvents);
 	};
 
@@ -242,8 +309,6 @@ export default function Home() {
 			event.id === newEvent.id ? newEvent : event
 		);
 
-		// TODO: sort events by date
-
 		setEvents(newEvents);
 	};
 
@@ -251,8 +316,6 @@ export default function Home() {
 		const newEvents = events.filter(
 			(event: EventData) => selectedEventId !== event.id
 		);
-
-		// TODO: sort events by date
 
 		setEvents(newEvents);
 	};
@@ -264,11 +327,12 @@ export default function Home() {
 		const currentEvents = await getEvents(token, email);
 
 		return currentEvents.filter(
-			(item: EventData) => item.colorId !== '2' && item.colorId !== '10'
+			(item: EventData) =>
+				item.colorId !== '2' &&
+				item.colorId !== '5' &&
+				item.colorId !== '10'
 		);
 	};
-
-	const [commentsFromDb, setCommentsFromDb] = useState<Comment[]>([]);
 
 	const getCommentsFromDb = async (currentEvent: EventData) => {
 		const response = await fetch(
@@ -326,6 +390,8 @@ export default function Home() {
 		};
 
 		setUserLocation(newLocation);
+		setLatitude(newLocation.lat);
+		setLongitude(newLocation.long);
 		setIsModifyLocationModalLoading(false);
 		closeLocationModifyModal();
 	};
@@ -359,6 +425,22 @@ export default function Home() {
 			contacts.map((contact: Contact, innerIndex: number) =>
 				index === innerIndex
 					? { ...contact, email: event.target.value }
+					: contact
+			)
+		);
+	};
+
+	const updateContactLocation = (event: any, index: number) => {
+		setContacts(
+			contacts.map((contact: Contact, innerIndex: number) =>
+				index === innerIndex
+					? {
+							...contact,
+							location: {
+								...location,
+								locationName: event.target.value
+							}
+					  }
 					: contact
 			)
 		);
@@ -446,64 +528,150 @@ export default function Home() {
 		}
 	}, [distanceInMinute, userLocation]);
 
-	const options: ('Összes' | 'Esemény' | 'Hívandó' | 'Kitöltendő')[] = [
+	function isEventData(value: EventData | Contact): value is EventData {
+		return (value as EventData).summary !== undefined;
+	}
+
+	useEffect(() => {
+		if (clickedMarkerData && isEventData(clickedMarkerData)) {
+			getCommentsFromDb(clickedMarkerData).then((data) => {
+				setCommentsFromDb(data);
+			});
+		}
+	}, [clickedMarkerData]);
+
+	const options: ('Összes' | 'Esemény' | 'Hívandó' | 'Kérdőív')[] = [
 		'Összes',
 		'Esemény',
 		'Hívandó',
-		'Kitöltendő'
+		'Kérdőív'
 	];
 
 	const [eventFilter, setEventFilter] = useState(options[0]);
 
 	const updateEventFilter = () => {
-		let starterEvents =
-			searchInputValue.length === 0
-				? [...eventsBackup]
-				: [
-						...eventsBackup.filter((event: EventData) =>
-							event.location
-								?.toLocaleLowerCase()
-								.includes(searchInputValue)
-						)
-				  ];
-
-		if (searchInputValue.length > 0) {
-			starterEvents.filter((event: EventData) =>
-				event.location?.includes(searchInputValue)
-			);
-		}
-
 		if (eventFilter === 'Összes') {
-			searchInputValue.length === 0
-				? setEvents(eventsBackup)
-				: setEvents([
-						...eventsBackup.filter((event: EventData) =>
-							event.location
-								?.toLocaleLowerCase()
-								.includes(searchInputValue.toLocaleLowerCase())
-						)
-				  ]);
+			if (searchInputValue.length === 0) {
+				setEvents([...eventsBackup]);
+				return;
+			}
+
+			setEvents(
+				eventsBackup.filter(
+					(eventData: EventData) =>
+						eventData?.location
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+						eventData?.summary
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+						eventData?.description
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase())
+				)
+			);
+
+			return;
 		}
 
 		if (eventFilter === 'Esemény') {
-			const filteredEvents = starterEvents.filter(
-				(event: EventData) => event?.colorId === undefined
+			if (searchInputValue.length === 0) {
+				setEvents([
+					...eventsBackup.filter(
+						(eventData: EventData) =>
+							eventData?.colorId === undefined
+					)
+				]);
+				return;
+			}
+
+			setEvents(
+				eventsBackup.filter(
+					(eventData: EventData) =>
+						(eventData?.location
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+							eventData?.summary
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								) ||
+							eventData?.description
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								)) &&
+						eventData?.colorId === undefined
+				)
 			);
-			setEvents(filteredEvents);
+
+			return;
 		}
 
-		if (eventFilter === 'Kitöltendő') {
-			const filteredEvents = starterEvents.filter(
-				(event: EventData) => event?.colorId === '1'
+		if (eventFilter === 'Kérdőív') {
+			if (searchInputValue.length === 0) {
+				setEvents([
+					...eventsBackup.filter(
+						(eventData: EventData) => eventData?.colorId === '1'
+					)
+				]);
+				return;
+			}
+
+			setEvents(
+				eventsBackup.filter(
+					(eventData: EventData) =>
+						(eventData?.location
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+							eventData?.summary
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								) ||
+							eventData?.description
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								)) &&
+						eventData?.colorId === '1'
+				)
 			);
-			setEvents(filteredEvents);
+
+			return;
 		}
 
 		if (eventFilter === 'Hívandó') {
-			const filteredEvents = starterEvents.filter(
-				(event: EventData) => event?.colorId === '11'
+			if (searchInputValue.length === 0) {
+				setEvents([
+					...eventsBackup.filter(
+						(eventData: EventData) => eventData?.colorId === '11'
+					)
+				]);
+				return;
+			}
+
+			setEvents(
+				eventsBackup.filter(
+					(eventData: EventData) =>
+						(eventData?.location
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+							eventData?.summary
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								) ||
+							eventData?.description
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								)) &&
+						eventData?.colorId === '11'
+				)
 			);
-			setEvents(filteredEvents);
+
+			return;
 		}
 	};
 
@@ -605,6 +773,7 @@ export default function Home() {
 										<EventCard
 											key={index}
 											eventData={event}
+											searchValue={searchInputValue}
 											onMarkerOpen={onMarkerOpen}
 											onUpdateButtonClick={() =>
 												openModal(event)
@@ -634,6 +803,7 @@ export default function Home() {
 											<EventCard
 												key={index}
 												eventData={location}
+												searchValue={searchInputValue}
 												onMarkerOpen={onMarkerOpen}
 												onUpdateButtonClick={() =>
 													openModal(location)
@@ -666,11 +836,15 @@ export default function Home() {
 						mapboxAccessToken={
 							process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN
 						}
-						initialViewState={{
-							longitude: 19,
-							latitude: 47.5,
-							zoom: 10
+						onMove={(viewport) => {
+							setLongitude(viewport.viewState.longitude);
+							setLatitude(viewport.viewState.latitude);
+							setZoom(viewport.viewState.zoom);
 						}}
+						initialViewState={viewport}
+						latitude={latitude}
+						longitude={longitude}
+						zoom={zoom}
 						mapStyle="mapbox://styles/mapbox/streets-v9"
 					>
 						{userLocation && (
@@ -718,6 +892,7 @@ export default function Home() {
 									/>
 								) : null
 							)}
+
 						{nearbyLocations &&
 							nearbyLocations
 								.sort((a, b) =>
@@ -736,10 +911,23 @@ export default function Home() {
 									) : null
 								)}
 
+						{contacts.length &&
+							contacts.map((contact: Contact, index) =>
+								contact.location?.coordinates?.latitude ? (
+									<ContactMapMarker
+										key={index}
+										contact={contact}
+										onClick={null}
+									/>
+								) : null
+							)}
+
 						{clickedMarkerData && (
 							<MapPopup
 								eventData={clickedMarkerData}
 								onClose={onMarkerClose}
+								onModifyEvent={openModal}
+								commentsFromDb={commentsFromDb}
 							/>
 						)}
 					</Map>
@@ -781,6 +969,7 @@ export default function Home() {
 						deleteContactByIndex={deleteContactByIndex}
 						updateContactByIndex={updateContactByIndex}
 						updateContactEmail={updateContactEmail}
+						updateContactLocation={updateContactLocation}
 						updateContactName={updateContactName}
 						updateContactPhoneNumber={updateContactPhoneNumber}
 					/>

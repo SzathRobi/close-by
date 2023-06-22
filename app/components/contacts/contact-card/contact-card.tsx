@@ -1,5 +1,6 @@
 'use client';
 
+import { ContactLocation } from '@/app/interfaces/contact-location.interface';
 import { Contact } from '@/app/interfaces/contact.interface';
 import { useState } from 'react';
 import { FaCheck, FaPencilAlt, FaTrash } from 'react-icons/fa';
@@ -13,6 +14,7 @@ interface ContactCardProps {
 	index: number;
 	updateContactName: any;
 	updateContactEmail: any;
+	updateContactLocation: any;
 	updateContactPhoneNumber: any;
 	deleteContactByIndex: any;
 	updateContactByIndex: any;
@@ -24,12 +26,16 @@ const ContactCard = ({
 	updateContactName,
 	updateContactPhoneNumber,
 	updateContactEmail,
+	updateContactLocation,
 	deleteContactByIndex,
 	updateContactByIndex
 }: ContactCardProps) => {
 	const [originalName] = useState<string>(contact?.name ?? '');
 	const [originalEmail] = useState<string>(contact.email);
 	const [originalPhoneNumber] = useState<string>(contact?.phoneNumber ?? '');
+	const [originalLocation] = useState<ContactLocation | undefined>(
+		contact?.location ?? undefined
+	);
 
 	const [modifyButtonIcon, setModifyButtonIcon] = useState(<FaPencilAlt />);
 	const [deleteButtonIcon, setDeleteButtonIcon] = useState(<FaTrash />);
@@ -42,7 +48,8 @@ const ContactCard = ({
 			{
 				name: originalName,
 				email: originalEmail,
-				phoneNumber: originalPhoneNumber
+				phoneNumber: originalPhoneNumber,
+				location: originalLocation
 			},
 			index
 		).then((data: any) => {
@@ -97,6 +104,17 @@ const ContactCard = ({
 					value={contact.phoneNumber}
 					onChange={(event: any) =>
 						updateContactPhoneNumber(event, index)
+					}
+				/>
+			</div>
+			<div className="mb-4">
+				<h4>Helyszín</h4>
+				<Input
+					placeholder="Nincs megadva"
+					name={`contact-location-${index}`}
+					value={contact.location?.locationName}
+					onChange={(event: any) =>
+						updateContactLocation(event, index)
 					}
 				/>
 			</div>
