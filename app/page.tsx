@@ -260,8 +260,12 @@ export default function Home() {
 				setLatitude(eventData.coordinates.lat);
 				setLongitude(eventData.coordinates.long);
 				setZoom(10);
-			}
 
+				getIsochroneData(
+					eventData.coordinates.lat,
+					eventData.coordinates.long
+				);
+			}
 			return;
 		}
 
@@ -336,9 +340,9 @@ export default function Home() {
 		setCommentsFromDb([]);
 	};
 
-	const getIsochroneData = async () => {
+	const getIsochroneData = async (lat: number, long: number) => {
 		const query = await fetch(
-			`${mapboxIsochroneUrlBase}${mapboxIsochroneProfile}/${userLocation?.long},${userLocation?.lat}?contours_minutes=${distanceInMinute}&polygons=true&access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`,
+			`${mapboxIsochroneUrlBase}${mapboxIsochroneProfile}/${long},${lat}?contours_minutes=${distanceInMinute}&polygons=true&access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`,
 			{ method: 'GET' }
 		);
 		const data = await query.json();
@@ -486,7 +490,7 @@ export default function Home() {
 
 	useEffect(() => {
 		if (userLocation) {
-			getIsochroneData();
+			getIsochroneData(userLocation?.lat, userLocation?.long);
 		}
 	}, [distanceInMinute, userLocation]);
 
