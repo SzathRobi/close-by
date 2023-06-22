@@ -10,6 +10,10 @@ export const eventTypes: EventType[] = [
 		color: 'red'
 	},
 	{
+		type: 'Meglévő',
+		color: 'purple'
+	},
+	{
 		type: 'Kérdőív',
 		color: 'gray'
 	}

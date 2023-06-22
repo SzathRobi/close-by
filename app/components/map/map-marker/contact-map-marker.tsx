@@ -15,14 +15,19 @@ const ContactMapMarker = ({ contact, onClick }: ContactMapMarkerProps) => {
 			anchor="bottom"
 			longitude={Number(contact.location?.coordinates?.longitude)}
 			latitude={Number(contact.location?.coordinates?.latitude)}
+			onClick={(event: any) =>
+				onClick(event, undefined, undefined, contact)
+			}
 		>
-			<FaUser
-				size={24}
-				style={{
-					color: '#ff00ff',
-					textShadow: '0px 0px 2px #000'
-				}}
-			/>
+			<div className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
+				<FaUser
+					size={16}
+					style={{
+						color: '#38BDF8',
+						textShadow: '0px 0px 2px #000'
+					}}
+				/>
+			</div>
 		</Marker>
 	);
 };

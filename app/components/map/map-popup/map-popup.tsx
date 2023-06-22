@@ -20,7 +20,7 @@ const MapPopup = ({
 	onClose,
 	onModifyEvent
 }: MapPopupProps) => {
-	if (eventData === null) {
+	if (!eventData) {
 		return null;
 	} else {
 		const isEventData = (
@@ -102,15 +102,14 @@ const MapPopup = ({
 				>
 					<h5 className="font-semibold">{eventData.email}</h5>
 					<p className="mb-2 min-w-[172px]">{eventData.name}</p>
-					<p className="mb-4">{eventData.phoneNumber}</p>
-
-					<button
-						className=" flex w-full items-center justify-center gap-2 rounded-full bg-emerald-700 py-0.5 px-8 text-[13px] text-white transition-colors hover:bg-emerald-800"
-						onClick={() => onModifyEvent(eventData)}
-					>
-						Módosítás
-						<BsPencil size={12} />
-					</button>
+					{eventData.phoneNumber ? (
+						<a
+							href={`tel:${eventData.phoneNumber}`}
+							className="mb-4"
+						>
+							{eventData.phoneNumber}
+						</a>
+					) : null}
 				</Popup>
 			);
 		}

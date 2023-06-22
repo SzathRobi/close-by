@@ -67,6 +67,10 @@ const EventForm = ({
 	}, [commentsFromDb]);
 
 	const getEventType = (event: EventData): EventType => {
+		if (event.colorId === '8') {
+			return eventTypes[3];
+		}
+
 		if (event.colorId === '1') {
 			return eventTypes[2];
 		}
@@ -108,6 +112,10 @@ const EventForm = ({
 		}
 
 		if (color === 'gray') {
+			return '8';
+		}
+
+		if (color === 'purple') {
 			return '1';
 		}
 

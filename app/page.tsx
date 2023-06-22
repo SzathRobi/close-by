@@ -28,7 +28,6 @@ import SearchInput from './components/shared/search-input/search-input';
 import { Listbox, Transition } from '@headlessui/react';
 import { RiArrowUpDownLine } from 'react-icons/ri';
 import { Comment } from './interfaces/comment.interface';
-import { useRouter } from 'next/navigation';
 import ContactMapMarker from './components/map/map-marker/contact-map-marker';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -45,8 +44,6 @@ export default function Home() {
 			// The user is not authenticated, handle it here.
 		}
 	});
-
-	const router = useRouter();
 
 	const [isMapUtilityOpen, setIsMapUtilityOpen] = useState<boolean>(true);
 	const [clickedMarkerData, setClickMarkerData] = useState<
@@ -89,17 +86,16 @@ export default function Home() {
 
 	const [searchInputValue, setSearchInputValue] = useState<string>('');
 
-	const [isModifyLocationModalLoading, setIsModifyLocationModalLoading] =
-		useState<boolean>(false);
-
 	const [shouldModifyUserLocation, setShouldModifyUserLocation] =
 		useState<boolean>(false);
 
-	const getEventType = (event: EventData) =>
+	const getEventType = (event: EventData): SelectOptions =>
 		event?.colorId === '11'
 			? 'Hívandó'
 			: event?.colorId === '8'
 			? 'Kérdőív'
+			: event?.colorId === '1'
+			? 'Meglévő'
 			: 'Esemény';
 
 	const onSearchEvent = async (event: any) => {
@@ -148,21 +144,6 @@ export default function Home() {
 					getEventType(eventData) === eventFilter
 			);
 		}
-
-		// const filteredEvents =
-		// 	eventFilter === 'Összes'
-		// 		? eventsBackup.filter((event) =>
-		// 				event.location
-		// 					?.toLowerCase()
-		// 					.includes(searchText.toLowerCase())
-		// 		  )
-		// 		: eventsBackup.filter(
-		// 				(event: EventData) =>
-		// 					event.location
-		// 						?.toLowerCase()
-		// 						.includes(searchText.toLowerCase()) &&
-		// 					getEventType(event) === eventFilter
-		// 		  );
 
 		const eventsWithoutSearchedLoaction = eventsBackup.filter(
 			(eventData: EventData) =>
@@ -263,34 +244,29 @@ export default function Home() {
 		return data.contacts;
 	};
 
-	const onContactMarkerOpen = (event: any, contact: Contact) => {
-		event.originalEvent.stopPropagation();
-
-		setClickMarkerData(contact);
-		if (
-			contact.location?.coordinates?.latitude &&
-			contact.location?.coordinates?.longitude
-		) {
-			setLatitude(Number(contact.location.coordinates.latitude));
-			setLongitude(Number(contact.location.coordinates.longitude));
-			setZoom(10);
-		}
-	};
-
 	const onMarkerOpen = (
 		event: any,
-		eventData: EventData,
-		clickFromCard?: boolean
+		eventData?: EventData,
+		clickFromCard?: boolean,
+		contact?: Contact
 	) => {
 		if (!clickFromCard) {
 			event.originalEvent.stopPropagation();
 		}
 
-		setClickMarkerData(eventData);
-		if (eventData.coordinates?.lat && eventData.coordinates?.long) {
-			setLatitude(eventData.coordinates.lat);
-			setLongitude(eventData.coordinates.long);
-			setZoom(10);
+		if (eventData) {
+			setClickMarkerData(eventData);
+			if (eventData.coordinates?.lat && eventData.coordinates?.long) {
+				setLatitude(eventData.coordinates.lat);
+				setLongitude(eventData.coordinates.long);
+				setZoom(10);
+			}
+
+			return;
+		}
+
+		if (contact) {
+			setClickMarkerData(contact);
 		}
 	};
 
@@ -376,8 +352,6 @@ export default function Home() {
 	const onModifyUserLocationSubmit = async (event: any) => {
 		event.preventDefault();
 
-		setIsModifyLocationModalLoading(true);
-
 		const response = await fetch(
 			`https://api.mapbox.com/geocoding/v5/mapbox.places/${event.target.location.value}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
 		);
@@ -392,7 +366,6 @@ export default function Home() {
 		setUserLocation(newLocation);
 		setLatitude(newLocation.lat);
 		setLongitude(newLocation.long);
-		setIsModifyLocationModalLoading(false);
 		closeLocationModifyModal();
 	};
 
@@ -486,17 +459,6 @@ export default function Home() {
 		setIsContactListOpen(true);
 	};
 
-	const isAccesTokenValid = (): boolean => {
-		const now = new Date(Date.now()).getTime();
-		const expirationTime = new Date(session.expires).getTime();
-
-		if (now < expirationTime) {
-			return true;
-		}
-
-		return false;
-	};
-
 	useEffect(() => {
 		if (session) {
 			if ('geolocation' in navigator) {
@@ -540,11 +502,19 @@ export default function Home() {
 		}
 	}, [clickedMarkerData]);
 
-	const options: ('Összes' | 'Esemény' | 'Hívandó' | 'Kérdőív')[] = [
+	type SelectOptions =
+		| 'Összes'
+		| 'Esemény'
+		| 'Hívandó'
+		| 'Kérdőív'
+		| 'Meglévő';
+
+	const options: SelectOptions[] = [
 		'Összes',
 		'Esemény',
 		'Hívandó',
-		'Kérdőív'
+		'Kérdőív',
+		'Meglévő'
 	];
 
 	const [eventFilter, setEventFilter] = useState(options[0]);
@@ -612,7 +582,7 @@ export default function Home() {
 			if (searchInputValue.length === 0) {
 				setEvents([
 					...eventsBackup.filter(
-						(eventData: EventData) => eventData?.colorId === '1'
+						(eventData: EventData) => eventData?.colorId === '8'
 					)
 				]);
 				return;
@@ -634,7 +604,7 @@ export default function Home() {
 								.includes(
 									searchInputValue.toLocaleLowerCase()
 								)) &&
-						eventData?.colorId === '1'
+						eventData?.colorId === '8'
 				)
 			);
 
@@ -673,6 +643,59 @@ export default function Home() {
 
 			return;
 		}
+
+		if (eventFilter === 'Meglévő') {
+			if (searchInputValue.length === 0) {
+				setEvents([
+					...eventsBackup.filter(
+						(eventData: EventData) => eventData?.colorId === '1'
+					)
+				]);
+				return;
+			}
+
+			setEvents(
+				eventsBackup.filter(
+					(eventData: EventData) =>
+						(eventData?.location
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+							eventData?.summary
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								) ||
+							eventData?.description
+								?.toLocaleLowerCase()
+								.includes(
+									searchInputValue.toLocaleLowerCase()
+								)) &&
+						eventData?.colorId === '1'
+				)
+			);
+
+			return;
+		}
+	};
+
+	const getTypeColor = (option: SelectOptions): string => {
+		if (option === 'Esemény') {
+			return 'bg-blue-400';
+		}
+
+		if (option === 'Hívandó') {
+			return 'bg-red-400';
+		}
+
+		if (option === 'Kérdőív') {
+			return 'bg-gray-400';
+		}
+
+		if (option === 'Meglévő') {
+			return 'bg-purple-300';
+		}
+
+		return 'bg-blue-400';
 	};
 
 	useEffect(() => {
@@ -741,6 +764,13 @@ export default function Home() {
 															>
 																{option}
 															</span>
+															{index !== 0 ? (
+																<div
+																	className={`absolute top-2.5 right-4 h-4 w-4 rounded ${getTypeColor(
+																		option
+																	)}`}
+																></div>
+															) : null}
 															{selected ? (
 																<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-600">
 																	<FaCheck
@@ -917,7 +947,7 @@ export default function Home() {
 									<ContactMapMarker
 										key={index}
 										contact={contact}
-										onClick={null}
+										onClick={onMarkerOpen}
 									/>
 								) : null
 							)}
