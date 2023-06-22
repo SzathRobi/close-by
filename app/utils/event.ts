@@ -24,23 +24,58 @@ export const getEventCoordinates: any = async (events: any[]) => {
 	return tempTest;
 };
 
+const normaliseMonth = (month: number) => {
+	const actualMonth = month + 1;
+
+	if (actualMonth < 10) {
+		return `0${actualMonth}`;
+	}
+
+	return actualMonth;
+};
+
+const normaliseDay = (day: number) => {
+	if (day < 10) {
+		return `0${day}`;
+	}
+
+	return day;
+};
+
 export const getEvents = async (
 	token: string,
 	email: string
 ): Promise<EventData[]> => {
-	const date = new Date();
+	const now = new Date(Date.now()).getTime();
+	const dayInMiliseconds = 1000 * 60 * 60 * 24;
+	const twoWeeksFromNowInMiliseconds = now + 14 * dayInMiliseconds;
+	const yearOfTwoWeeksFromNow = new Date(
+		twoWeeksFromNowInMiliseconds
+	).getFullYear();
+	const monthOfTwoWeeksFromNow = normaliseMonth(
+		new Date(twoWeeksFromNowInMiliseconds).getMonth()
+	);
+	const dayOfTwoWeeksFromNow = normaliseDay(
+		new Date(twoWeeksFromNowInMiliseconds).getDate()
+	);
 
-	const currentYear = date.getFullYear();
-	const currentMonth = `0${date.getMonth() + 1}`;
-	const previousThirdMonth = `0${date.getMonth() - 3}`;
-	const currentDay = date.getDate();
+	const previousThirdMonthInMiliseconds = now - 90 * dayInMiliseconds;
+	const yearOfPreviousThirdMonth = new Date(
+		previousThirdMonthInMiliseconds
+	).getFullYear();
+	const monthOfPreviousThirdMonth = normaliseMonth(
+		new Date(previousThirdMonthInMiliseconds).getMonth()
+	);
+	const dayOfPreviousThirdMonth = normaliseDay(
+		new Date(previousThirdMonthInMiliseconds).getDate()
+	);
 
 	const res = await fetch(
 		`${BASE_CALENDAR_URL}/${email}/events?` +
 			new URLSearchParams({
 				maxResults: '200',
-				timeMin: `${currentYear}-${previousThirdMonth}-01T10:00:00-07:00`,
-				timeMax: `${currentYear}-${currentMonth}-${currentDay}T10:00:00-07:00`,
+				timeMin: `${yearOfPreviousThirdMonth}-${monthOfPreviousThirdMonth}-${dayOfPreviousThirdMonth}T10:00:00-07:00`,
+				timeMax: `${yearOfTwoWeeksFromNow}-${monthOfTwoWeeksFromNow}-${dayOfTwoWeeksFromNow}T10:00:00-07:00`,
 				showDeleted: 'false',
 				singleEvents: 'true',
 				orderBy: 'startTime'
