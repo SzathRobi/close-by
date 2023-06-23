@@ -306,7 +306,30 @@ export default function Home() {
 	): Promise<EventData[]> => {
 		const currentEvents = await getEvents(token, email);
 
-		return currentEvents.filter(
+		const now = new Date(Date.now()).getTime();
+		const dayInMiliseconds = 1000 * 60 * 60 * 24;
+
+		const eventsOfPreviousThirdMonth = currentEvents.filter(
+			(currentEvent: EventData) =>
+				new Date(currentEvent.start.dateTime).getTime() <
+				now + dayInMiliseconds
+		);
+
+		const eventsOfTwoWeeksFromNow = currentEvents.filter(
+			(currentEvent: EventData) =>
+				new Date(currentEvent.start.dateTime).getTime() >
+				now + dayInMiliseconds
+		);
+
+		const filteredEventsOfTwoWeeksFromNow = eventsOfTwoWeeksFromNow.filter(
+			(eventData: EventData) =>
+				eventData?.colorId === undefined || eventData?.colorId === '11'
+		);
+
+		return [
+			...filteredEventsOfTwoWeeksFromNow,
+			...eventsOfPreviousThirdMonth
+		].filter(
 			(item: EventData) =>
 				item.colorId !== '2' &&
 				item.colorId !== '5' &&
