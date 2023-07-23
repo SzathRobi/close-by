@@ -1,7 +1,7 @@
 'use client';
 
 import { RiDeleteBin6Line } from 'react-icons/ri';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { Attendant } from '@/app/interfaces/attendant.interface';
 import { EventData } from '@/app/interfaces/event-data.interface';
 
@@ -15,10 +15,14 @@ import { Contact } from '@/app/interfaces/contact.interface';
 import { FaUser } from 'react-icons/fa';
 import { MdClose } from 'react-icons/md';
 import Select from '../shared/select/select';
-import { eventTypes } from '@/app/constants/event-constans';
+import { eventTypes, phoneNumberRegex } from '@/app/constants/event-constans';
 import { EventType } from '@/app/interfaces/event-type.interface';
 import { postComments } from '@/app/utils/comment';
 import { Comment } from '@/app/interfaces/comment.interface';
+import {
+	postPhoneNumber,
+	updatePhoneNumberByCalendarEventId
+} from '@/app/utils/phone-number';
 
 interface EventFormProps {
 	calendarEvent?: EventData;
@@ -61,17 +65,31 @@ const EventForm = ({
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [comments, setComments] = useState<Comment[]>([]);
+	const [phoneNumber, setPhoneNumber] = useState<string>('');
 
 	useEffect(() => {
 		setComments(commentsFromDb);
 	}, [commentsFromDb]);
 
+	useEffect(() => {
+		if (selectedEvent && selectedEvent.description) {
+			const phoneNumberFromDescription: RegExpMatchArray | null =
+				selectedEvent.description.match(phoneNumberRegex);
+
+			if (phoneNumberFromDescription) {
+				setPhoneNumber(phoneNumberFromDescription[0]);
+			}
+		}
+	}, [selectedEvent]);
+
+	useEffect(() => {
+		if (selectedEvent && selectedEvent.phoneNumber) {
+			setPhoneNumber(selectedEvent.phoneNumber.phoneNumber);
+		}
+	}, [selectedEvent]);
+
 	const getEventType = (event: EventData): EventType => {
 		if (event.colorId === '8') {
-			return eventTypes[3];
-		}
-
-		if (event.colorId === '1') {
 			return eventTypes[2];
 		}
 
@@ -115,10 +133,6 @@ const EventForm = ({
 			return '8';
 		}
 
-		if (color === 'purple') {
-			return '1';
-		}
-
 		return null;
 	};
 
@@ -134,8 +148,8 @@ const EventForm = ({
 
 		const data = await response.json();
 
-		const newEvent = {
-			colorId: getColorId(selectValue.color),
+		const newEvent: Partial<EventData> = {
+			colorId: getColorId(selectValue.color) || undefined,
 			summary: event.target.title.value,
 			description: event.target.description.value,
 			location: event.target.location.value,
@@ -151,6 +165,12 @@ const EventForm = ({
 				useDefault: true
 			},
 			attendees: attendants,
+			phoneNumber: selectedEvent
+				? {
+						calendarEventId: selectedEvent.calendarEventId,
+						phoneNumber: event.target.phoneNumber.value
+				  }
+				: undefined,
 			coordinates: {
 				long: data.features[0].center[0],
 				lat: data.features[0].center[1]
@@ -193,7 +213,20 @@ const EventForm = ({
 					closeModal();
 				})
 				.then(() => {
-					postComments(comments);
+					if (comments.length > 0) {
+						postComments(comments);
+					}
+
+					const phoneNumberRequest = {
+						phoneNumber,
+						calendarEventId: selectedEvent.calendarEventId
+					};
+
+					if (selectedEvent.phoneNumber !== undefined) {
+						postPhoneNumber(phoneNumberRequest);
+					} else {
+						updatePhoneNumberByCalendarEventId(phoneNumberRequest);
+					}
 				});
 			return;
 		}
@@ -257,6 +290,16 @@ const EventForm = ({
 			}, 7000);
 
 			closeModal();
+		});
+	};
+
+	const handlePhoneNumberInputChange = (
+		event: ChangeEvent<HTMLInputElement>
+	) => {
+		setPhoneNumber(event.target.value);
+		setSelectedEvent({
+			...selectedEvent,
+			phoneNumber: event.target.value
 		});
 	};
 
@@ -449,11 +492,23 @@ const EventForm = ({
 				/>
 			</div>
 			{selectedEvent ? (
-				<CommentBlock
-					calendarEventId={selectedEvent.calendarEventId}
-					comments={comments}
-					setComments={setComments}
-				/>
+				<div>
+					<div className="mb-6">
+						<h3 className="mb-2 font-medium">Telefonszám:</h3>
+						<Input
+							name="phoneNumber"
+							value={phoneNumber}
+							onChange={(event: ChangeEvent<HTMLInputElement>) =>
+								handlePhoneNumberInputChange(event)
+							}
+						/>
+					</div>
+					<CommentBlock
+						calendarEventId={selectedEvent.calendarEventId}
+						comments={comments}
+						setComments={setComments}
+					/>
+				</div>
 			) : null}
 			<div className="mt-6 flex items-center justify-start gap-4">
 				{selectedEvent && (

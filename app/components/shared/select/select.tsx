@@ -7,7 +7,7 @@ import Input from '../input/input';
 
 interface SelectProps {
 	label: string;
-	selectValue: any;
+	selectValue: EventType;
 	setSelectValue: any;
 }
 

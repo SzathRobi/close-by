@@ -4,6 +4,7 @@ import { FaMapMarkedAlt } from 'react-icons/fa';
 import { EventData } from '@/app/interfaces/event-data.interface';
 
 import Button from '../shared/button/button';
+import { phoneNumberRegex } from '@/app/constants/event-constans';
 
 interface EventCardProps {
 	eventData: EventData;
@@ -38,20 +39,17 @@ const EventCard = ({
 	const startTime = eventData.start.dateTime.split('T')[1].slice(0, 5);
 	const endTime = eventData.end.dateTime.split('T')[1].slice(0, 5);
 
-	const phoneNumberRegex = /\+\d{11}/gm;
-
 	const getEventTypeColor = (color: string | undefined): string => {
 		if (!color) {
 			return 'bg-blue-400';
 		}
+
 		if (color === '11') {
 			return 'bg-red-400';
 		}
+
 		if (color === '8') {
 			return 'bg-gray-500';
-		}
-		if (color === '1') {
-			return 'bg-purple-300';
 		}
 
 		return 'bg-blue-400';
@@ -87,6 +85,7 @@ const EventCard = ({
 				Telefonszám:{' '}
 				{(eventData.description &&
 					eventData.description.match(phoneNumberRegex)) ||
+					eventData?.phoneNumber?.phoneNumber ||
 					'nincs megadva'}
 			</p>
 

@@ -16,19 +16,21 @@ import FeedbackSmall from './components/feedbacks/small/feedback-small';
 import { RequestStatus } from './types/request-status.type';
 import MapMarker from './components/map/map-marker/map-marker';
 import MapPopup from './components/map/map-popup/map-popup';
-import { MdEventBusy, MdLocationOn } from 'react-icons/md';
+import { MdLocationOn } from 'react-icons/md';
 import { Location } from './interfaces/location.interface';
 import { Contact } from './interfaces/contact.interface';
 import ContactContaner from './components/contacts/contact-container/contact-contaner';
 import Header from './components/header/header';
 import MapUtility from './components/map/map-utility/map-utility';
 import ModifyUserLocationForm from './components/forms/modify-user-location-form/modify-user-location-form';
-import { FaArrowAltCircleDown, FaCheck } from 'react-icons/fa';
+import { FaArrowAltCircleDown, FaCheck, FaUser } from 'react-icons/fa';
 import SearchInput from './components/shared/search-input/search-input';
 import { Listbox, Transition } from '@headlessui/react';
 import { RiArrowUpDownLine } from 'react-icons/ri';
 import { Comment } from './interfaces/comment.interface';
 import ContactMapMarker from './components/map/map-marker/contact-map-marker';
+import ContactCard from './components/events/contact-card';
+import { PhoneNumberInDb } from './interfaces/phone-number-in-db.interface';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -64,7 +66,7 @@ export default function Home() {
 
 	const [userLocation, setUserLocation] = useState<Location | null>(null);
 	const [isochroneData, setIsochroneData] = useState<any>(null);
-	const [distanceInMinute, setDistanceInMinute] = useState<number>(60);
+	const [distanceInMinute] = useState<number>(60);
 	const [nearbyLocations, setNearbyLocations] = useState<EventData[] | null>(
 		null
 	);
@@ -79,10 +81,14 @@ export default function Home() {
 	});
 
 	const [contacts, setContacts] = useState<Contact[]>([]);
+	const [renderedContacts, setRenderedContacts] = useState<Contact[]>([]);
 	const [isContactListOpen, setIsContactListOpen] = useState<boolean>(false);
 	const [filterableContacts, setFilterableContacts] = useState<Contact[]>([]);
 
 	const [commentsFromDb, setCommentsFromDb] = useState<Comment[]>([]);
+	const [phonenumbersFromDb, setPhoneNumbersFromDb] = useState<
+		PhoneNumberInDb[]
+	>([]);
 
 	const [searchInputValue, setSearchInputValue] = useState<string>('');
 
@@ -94,8 +100,6 @@ export default function Home() {
 			? 'Hívandó'
 			: event?.colorId === '8'
 			? 'Kérdőív'
-			: event?.colorId === '1'
-			? 'Meglévő'
 			: 'Esemény';
 
 	const onSearchEvent = async (event: any) => {
@@ -103,7 +107,7 @@ export default function Home() {
 
 		const searchText: string = event.target.search.value;
 
-		if (searchText.length === 0) {
+		if (searchText.length === 0 && eventFilter !== 'Meglévő') {
 			setEvents([...eventsBackup]);
 			return;
 		}
@@ -111,110 +115,134 @@ export default function Home() {
 		let searchLocation: any;
 		let hasError = false;
 
-		try {
-			const response = await fetch(
-				`https://api.mapbox.com/geocoding/v5/mapbox.places/${searchText}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
-			);
-			const data = await response.json();
+		if (eventFilter !== 'Meglévő') {
+			try {
+				const response = await fetch(
+					`https://api.mapbox.com/geocoding/v5/mapbox.places/${searchText}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
+				);
+				const data = await response.json();
 
-			searchLocation = {
-				long: data.features[0].center[0],
-				lat: data.features[0].center[1]
-			};
-		} catch (error) {
-			hasError = true;
-		}
+				searchLocation = {
+					long: data.features[0].center[0],
+					lat: data.features[0].center[1]
+				};
+			} catch (error) {
+				hasError = true;
+			}
 
-		let filteredEvents = eventsBackup.filter(
-			(eventData: EventData) =>
-				eventData?.location
-					?.toLocaleLowerCase()
-					.includes(searchText.toLowerCase()) ||
-				eventData?.summary
-					?.toLocaleLowerCase()
-					.includes(searchText.toLowerCase()) ||
-				eventData?.description
-					?.toLocaleLowerCase()
-					.includes(searchText.toLowerCase())
-		);
-
-		if (eventFilter !== 'Összes') {
-			filteredEvents = filteredEvents.filter(
+			let filteredEvents = eventsBackup.filter(
 				(eventData: EventData) =>
-					getEventType(eventData) === eventFilter
+					eventData?.location
+						?.toLocaleLowerCase()
+						.includes(searchText.toLowerCase()) ||
+					eventData?.summary
+						?.toLocaleLowerCase()
+						.includes(searchText.toLowerCase()) ||
+					eventData?.description
+						?.toLocaleLowerCase()
+						.includes(searchText.toLowerCase())
 			);
+
+			if (eventFilter !== 'Összes') {
+				filteredEvents = filteredEvents.filter(
+					(eventData: EventData) =>
+						getEventType(eventData) === eventFilter
+				);
+			}
+
+			const eventsWithoutSearchedLoaction = eventsBackup.filter(
+				(eventData: EventData) =>
+					!eventData.location
+						?.toLowerCase()
+						.includes(searchText.toLowerCase())
+			);
+
+			const getNearbyLocations = hasError
+				? []
+				: eventsWithoutSearchedLoaction.filter((event: EventData) => {
+						// centertől észak - nyugatra
+						if (
+							searchLocation &&
+							event.coordinates &&
+							searchLocation?.lat > event.coordinates?.lat &&
+							searchLocation.long > event.coordinates?.long
+						) {
+							return (
+								searchLocation.long - event.coordinates.long <
+									0.65 &&
+								searchLocation.lat - event.coordinates.lat <
+									0.35
+							);
+						}
+
+						// centertől észak - kelet
+						if (
+							searchLocation &&
+							event.coordinates &&
+							searchLocation?.lat < event.coordinates?.lat &&
+							searchLocation.long > event.coordinates?.long
+						) {
+							return (
+								searchLocation.long - event.coordinates.long <
+									0.65 &&
+								event.coordinates.lat - searchLocation.lat <
+									0.35
+							);
+						}
+
+						// centertől dél - kelet
+						if (
+							searchLocation &&
+							event.coordinates &&
+							searchLocation?.lat < event.coordinates?.lat &&
+							searchLocation.long < event.coordinates?.long
+						) {
+							return (
+								event.coordinates.long - searchLocation.long <
+									0.65 &&
+								event.coordinates.lat - searchLocation.lat <
+									0.35
+							);
+						}
+
+						// centertől dél - nyugat
+						if (
+							searchLocation &&
+							event.coordinates &&
+							searchLocation?.lat > event.coordinates?.lat &&
+							searchLocation.long < event.coordinates?.long
+						) {
+							return (
+								event.coordinates.long - searchLocation.long <
+									0.65 &&
+								searchLocation.lat - event.coordinates.lat <
+									0.35
+							);
+						}
+				  });
+
+			setNearbyLocations(getNearbyLocations);
+
+			setEvents(filteredEvents);
+		} else {
+			let filteredContacts = contacts.filter(
+				(contact: Contact) =>
+					contact?.location?.locationName
+						?.toLocaleLowerCase()
+						.includes(searchText.toLowerCase()) ||
+					contact?.email
+						?.toLocaleLowerCase()
+						.includes(searchText.toLowerCase()) ||
+					contact?.name
+						?.toLocaleLowerCase()
+						.includes(searchText.toLowerCase()) ||
+					contact?.phoneNumber
+						?.toLocaleLowerCase()
+						.includes(searchText.toLowerCase())
+			);
+
+			setRenderedContacts(filteredContacts);
 		}
-
-		const eventsWithoutSearchedLoaction = eventsBackup.filter(
-			(eventData: EventData) =>
-				!eventData.location
-					?.toLowerCase()
-					.includes(searchText.toLowerCase())
-		);
-
-		const getNearbyLocations = hasError
-			? []
-			: eventsWithoutSearchedLoaction.filter((event: EventData) => {
-					// centertől észak - nyugatra
-					if (
-						searchLocation &&
-						event.coordinates &&
-						searchLocation?.lat > event.coordinates?.lat &&
-						searchLocation.long > event.coordinates?.long
-					) {
-						return (
-							searchLocation.long - event.coordinates.long <
-								0.65 &&
-							searchLocation.lat - event.coordinates.lat < 0.35
-						);
-					}
-
-					// centertől észak - kelet
-					if (
-						searchLocation &&
-						event.coordinates &&
-						searchLocation?.lat < event.coordinates?.lat &&
-						searchLocation.long > event.coordinates?.long
-					) {
-						return (
-							searchLocation.long - event.coordinates.long <
-								0.65 &&
-							event.coordinates.lat - searchLocation.lat < 0.35
-						);
-					}
-
-					// centertől dél - kelet
-					if (
-						searchLocation &&
-						event.coordinates &&
-						searchLocation?.lat < event.coordinates?.lat &&
-						searchLocation.long < event.coordinates?.long
-					) {
-						return (
-							event.coordinates.long - searchLocation.long <
-								0.65 &&
-							event.coordinates.lat - searchLocation.lat < 0.35
-						);
-					}
-
-					// centertől dél - nyugat
-					if (
-						searchLocation &&
-						event.coordinates &&
-						searchLocation?.lat > event.coordinates?.lat &&
-						searchLocation.long < event.coordinates?.long
-					) {
-						return (
-							event.coordinates.long - searchLocation.long <
-								0.65 &&
-							searchLocation.lat - event.coordinates.lat < 0.35
-						);
-					}
-			  });
-
-		setNearbyLocations(getNearbyLocations);
-
-		setEvents(filteredEvents);
 	};
 
 	const onSearchInputChange = (event: any) => {
@@ -225,6 +253,8 @@ export default function Home() {
 
 			if (eventFilter === 'Összes') {
 				setEvents(eventsBackup);
+			} else if (eventFilter === 'Meglévő') {
+				setRenderedContacts([...contacts]);
 			} else {
 				const filteredEvents = eventsBackup.filter(
 					(eventData: EventData) =>
@@ -234,14 +264,17 @@ export default function Home() {
 			}
 		}
 	};
-
 	const getContactsInDb = async () => {
-		const res = await fetch('/api/contacts');
-		const data = await res.json();
-
-		// setContactsInDb(data.contacts);
-		// setContacts();
+		const response = await fetch('/api/contacts');
+		const data = await response.json();
 		return data.contacts;
+	};
+
+	const getPhoneNumbersFromDb = async () => {
+		const response = await fetch(`/api/phonenumber`);
+		const data = await response.json();
+
+		return data.phonenumbers;
 	};
 
 	const onMarkerOpen = (
@@ -322,8 +355,7 @@ export default function Home() {
 		);
 
 		const filteredEventsOfTwoWeeksFromNow = eventsOfTwoWeeksFromNow.filter(
-			(eventData: EventData) =>
-				eventData?.colorId === undefined || eventData?.colorId === '11'
+			(eventData: EventData) => eventData?.colorId === undefined
 		);
 
 		return [
@@ -345,6 +377,7 @@ export default function Home() {
 
 		return data.comment;
 	};
+
 	const openModal = async (currentEvent?: EventData) => {
 		if (currentEvent) {
 			setSelectedEvent(currentEvent);
@@ -486,6 +519,11 @@ export default function Home() {
 		setIsContactListOpen(true);
 	};
 
+	const [isUpcomingEventsAreLoading, setIsUpcomingEventsAreLoading] =
+		useState<boolean>(true);
+	const [isPhoneNumbersFromDbAreLoading, setIsPhoneNumbersFromDbAreLoading] =
+		useState<boolean>(true);
+
 	useEffect(() => {
 		if (session) {
 			if ('geolocation' in navigator) {
@@ -499,6 +537,7 @@ export default function Home() {
 				.then((currentEvents: EventData[]) => {
 					setEvents(currentEvents);
 					setEventsBackup(currentEvents);
+					setIsUpcomingEventsAreLoading(false);
 				})
 				.catch(() => {
 					signOut({ redirect: false, callbackUrl: '/auth/login' });
@@ -506,10 +545,42 @@ export default function Home() {
 
 			getContactsInDb().then((contacts) => {
 				setContacts(contacts);
+				setRenderedContacts(contacts);
 				setFilterableContacts(contacts);
+			});
+
+			getPhoneNumbersFromDb().then((phoneNumbers) => {
+				setPhoneNumbersFromDb(phoneNumbers);
+				setIsPhoneNumbersFromDbAreLoading(false);
 			});
 		}
 	}, [session]);
+
+	useEffect(() => {
+		if (eventsBackup.length > 0 && phonenumbersFromDb.length > 0) {
+			const eventsBackupWithPhoneNumbers = eventsBackup.map(
+				(eventData: EventData) => {
+					const phoneNumberForEvent = phonenumbersFromDb.find(
+						(phoneNumber: PhoneNumberInDb) =>
+							phoneNumber.calendarEventId ===
+							eventData.calendarEventId
+					);
+
+					if (phoneNumberForEvent) {
+						return {
+							...eventData,
+							phoneNumber: phoneNumberForEvent
+						};
+					} else {
+						return eventData;
+					}
+				}
+			);
+
+			setEvents(eventsBackupWithPhoneNumbers);
+			setEventsBackup(eventsBackupWithPhoneNumbers);
+		}
+	}, [isUpcomingEventsAreLoading, isPhoneNumbersFromDbAreLoading]);
 
 	useEffect(() => {
 		if (userLocation) {
@@ -548,6 +619,8 @@ export default function Home() {
 
 	const updateEventFilter = () => {
 		if (eventFilter === 'Összes') {
+			setRenderedContacts([]);
+
 			if (searchInputValue.length === 0) {
 				setEvents([...eventsBackup]);
 				return;
@@ -673,31 +746,27 @@ export default function Home() {
 
 		if (eventFilter === 'Meglévő') {
 			if (searchInputValue.length === 0) {
-				setEvents([
-					...eventsBackup.filter(
-						(eventData: EventData) => eventData?.colorId === '1'
-					)
-				]);
+				setEvents([]);
+				setRenderedContacts([...contacts]);
 				return;
 			}
 
-			setEvents(
-				eventsBackup.filter(
-					(eventData: EventData) =>
-						(eventData?.location
+			setEvents([]);
+			setRenderedContacts(
+				contacts.filter(
+					(contact: Contact) =>
+						contact?.location?.locationName
 							?.toLocaleLowerCase()
 							.includes(searchInputValue.toLocaleLowerCase()) ||
-							eventData?.summary
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								) ||
-							eventData?.description
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								)) &&
-						eventData?.colorId === '1'
+						contact?.email
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+						contact?.name
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+						contact?.phoneNumber
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase())
 				)
 			);
 
@@ -791,13 +860,23 @@ export default function Home() {
 															>
 																{option}
 															</span>
-															{index !== 0 ? (
+															{index ===
+															0 ? null : index ===
+															  4 ? (
+																<div className="absolute top-2.5 right-4 rounded">
+																	<FaUser
+																		size={
+																			12
+																		}
+																	/>
+																</div>
+															) : (
 																<div
 																	className={`absolute top-2.5 right-4 h-4 w-4 rounded ${getTypeColor(
 																		option
 																	)}`}
 																></div>
-															) : null}
+															)}
 															{selected ? (
 																<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-600">
 																	<FaCheck
@@ -824,29 +903,37 @@ export default function Home() {
 					/>
 					<div className="mb-6 h-full w-full overflow-y-scroll lg:mb-5 lg:pb-12">
 						<div className=" p-2">
-							{events.length > 0 ? (
-								events.map(
-									(event: EventData, index: number) => (
-										<EventCard
-											key={index}
-											eventData={event}
-											searchValue={searchInputValue}
-											onMarkerOpen={onMarkerOpen}
-											onUpdateButtonClick={() =>
-												openModal(event)
-											}
-										/>
-									)
-								)
-							) : (
-								<div className="mt-8 flex flex-col items-center justify-center gap-2">
-									<MdEventBusy size={120} opacity={0.5} />
-									<p>Jelenleg nincsenek események</p>
-								</div>
-							)}
+							{events.length > 0
+								? events.map(
+										(event: EventData, index: number) => (
+											<EventCard
+												key={index}
+												eventData={event}
+												searchValue={searchInputValue}
+												onMarkerOpen={onMarkerOpen}
+												onUpdateButtonClick={() =>
+													openModal(event)
+												}
+											/>
+										)
+								  )
+								: null}
+
+							{eventFilter === 'Meglévő'
+								? renderedContacts.map(
+										(renderedContact: Contact) => (
+											<ContactCard
+												key={renderedContact.email}
+												contact={renderedContact}
+												onMarkerOpen={onMarkerOpen}
+												searchValue={searchInputValue}
+											/>
+										)
+								  )
+								: null}
 
 							{/* NEARBY LOCATIONS */}
-							{nearbyLocations ? (
+							{nearbyLocations && eventFilter !== 'Meglévő' ? (
 								<h4 className="mt-12 mb-16 rounded bg-gray-200 p-4 text-3xl font-semibold">
 									Események a közelben
 								</h4>
@@ -969,15 +1056,17 @@ export default function Home() {
 								)}
 
 						{contacts.length &&
-							contacts.map((contact: Contact, index) =>
-								contact.location?.coordinates?.latitude ? (
-									<ContactMapMarker
-										key={index}
-										contact={contact}
-										onClick={onMarkerOpen}
-									/>
-								) : null
-							)}
+						(eventFilter === 'Meglévő' || eventFilter === 'Összes')
+							? contacts.map((contact: Contact, index) =>
+									contact.location?.coordinates?.latitude ? (
+										<ContactMapMarker
+											key={index}
+											contact={contact}
+											onClick={onMarkerOpen}
+										/>
+									) : null
+							  )
+							: null}
 
 						{clickedMarkerData && (
 							<MapPopup

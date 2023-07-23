@@ -92,24 +92,29 @@ export const getEvents = async (
 	const events = await eventsData.items.reverse();
 	const eventCoordinates = await getEventCoordinates(events);
 
-	const mappedEvents = await events.map((event: any, index: number) => {
-		return {
-			attendees: event.attendees
-				? event.attendees.map((attendant: any) =>
-						mapCalendarEventAttendantToEventCardAttendant(attendant)
-				  )
-				: [],
-			description: event.description,
-			end: event.end,
-			id: event.id,
-			start: event.start,
-			summary: event.summary,
-			location: event.location,
-			coordinates: mapCoordinates(eventCoordinates[index]),
-			colorId: event?.colorId,
-			calendarEventId: event.id
-		};
-	});
+	const mappedEvents = await events.map(
+		(event: any, index: number): EventData => {
+			return {
+				attendees: event.attendees
+					? event.attendees.map((attendant: any) =>
+							mapCalendarEventAttendantToEventCardAttendant(
+								attendant
+							)
+					  )
+					: [],
+				description: event.description,
+				end: event.end,
+				id: event.id,
+				start: event.start,
+				summary: event.summary,
+				location: event.location,
+				coordinates: mapCoordinates(eventCoordinates[index]),
+				colorId: event?.colorId,
+				calendarEventId: event.id,
+				phoneNumber: undefined
+			};
+		}
+	);
 
 	return await mappedEvents;
 };

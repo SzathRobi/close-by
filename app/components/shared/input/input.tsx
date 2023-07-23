@@ -60,9 +60,9 @@ const Input = ({
 					onKeyDown={onKeyDown}
 					onFocus={onFocus}
 					onBlur={onBlur}
-					className={`w-full mb-1 shadow-md shadow-neutral-400 p-2 rounded ${
+					className={`mb-1 w-full rounded p-2 shadow-md shadow-neutral-400 ${
 						errorMessage && 'border-b-2 border-rose-600'
-					} ${disabled && 'shadow-none border-none'}`}
+					} ${disabled && 'border-none shadow-none'}`}
 				/>
 			</label>
 			{icon && (

@@ -1,4 +1,5 @@
 import { Attendant } from './attendant.interface';
+import { PhoneNumberInDb } from './phone-number-in-db.interface';
 
 export interface EventData {
 	attendees: Attendant[];
@@ -20,5 +21,9 @@ export interface EventData {
 	coordinates?: {
 		long: number;
 		lat: number;
+	};
+	phoneNumber?: PhoneNumberInDb;
+	reminders?: {
+		useDefault: boolean;
 	};
 }

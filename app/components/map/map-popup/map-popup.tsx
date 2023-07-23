@@ -1,5 +1,6 @@
 'use client';
 
+import { phoneNumberRegex } from '@/app/constants/event-constans';
 import { Comment } from '@/app/interfaces/comment.interface';
 import { Contact } from '@/app/interfaces/contact.interface';
 import { EventData } from '@/app/interfaces/event-data.interface';
@@ -35,8 +36,6 @@ const MapPopup = ({
 				.split('T')[1]
 				.slice(0, 5);
 			const endTime = eventData.end.dateTime.split('T')[1].slice(0, 5);
-
-			const phoneNumberRegex = /\+\d{11}/gm;
 
 			const [comments, setComments] = useState<Comment[]>([
 				...commentsFromDb

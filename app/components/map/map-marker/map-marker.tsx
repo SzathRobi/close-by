@@ -15,9 +15,6 @@ const MapMarker = ({ eventData, onClick }: MapMarkerProps) => {
 		if (color === '11') {
 			return '#F87171';
 		}
-		if (color === '1') {
-			return '#818CF8';
-		}
 		if (color === '8') {
 			return '#78716C';
 		}

@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import clientPromise from '.';
 
 let client;

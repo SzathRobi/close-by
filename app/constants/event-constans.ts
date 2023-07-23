@@ -10,11 +10,10 @@ export const eventTypes: EventType[] = [
 		color: 'red'
 	},
 	{
-		type: 'Meglévő',
-		color: 'purple'
-	},
-	{
 		type: 'Kérdőív',
 		color: 'gray'
 	}
 ];
+
+export const phoneNumberRegex =
+	/(\+36|06)\s?-?\s?\d{2,3}\s?-?\s?\d{3}\s?-?\s?\d{3,4}/g;
