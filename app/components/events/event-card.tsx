@@ -83,10 +83,11 @@ const EventCard = ({
 
 			<p className="mb-4">
 				Telefonszám:{' '}
-				{(eventData.description &&
-					eventData.description.match(phoneNumberRegex)) ||
-					eventData?.phoneNumber?.phoneNumber ||
-					'nincs megadva'}
+				{eventData.phoneNumber
+					? eventData.phoneNumber.phoneNumber
+					: eventData.description
+					? eventData.description.match(phoneNumberRegex)
+					: 'Nincs megadva'}
 			</p>
 
 			<p className="mb-6">{eventData.attendees.length} résztvevő</p>

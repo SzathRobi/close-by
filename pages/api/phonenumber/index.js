@@ -19,7 +19,6 @@ const handler = async (request, response) => {
 	if (request.method === 'POST') {
 		try {
 			let bodyObject = JSON.parse(request.body);
-			console.log('bodyObject:', bodyObject);
 			let myPhoneNumber = await postPhoneNumber(bodyObject);
 			response.json({ success: true });
 		} catch (error) {
