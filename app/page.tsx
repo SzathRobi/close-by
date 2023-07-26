@@ -304,6 +304,15 @@ export default function Home() {
 
 		if (contact) {
 			setClickMarkerData(contact);
+
+			if (
+				contact.location?.coordinates?.latitude &&
+				contact.location?.coordinates.longitude
+			) {
+				setLatitude(Number(contact.location.coordinates.latitude));
+				setLongitude(Number(contact.location.coordinates.longitude));
+				setZoom(10);
+			}
 		}
 	};
 
