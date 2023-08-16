@@ -322,7 +322,7 @@ const EventForm = ({
 			</h2>
 			<div className="mb-6">
 				<h3 className="mb-2 font-medium">
-					Cím<span className="text-red-700">*</span>:
+					Esemény neve<span className="text-red-700">*</span>:
 				</h3>
 				<Input
 					required

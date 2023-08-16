@@ -31,6 +31,8 @@ import { Comment } from './interfaces/comment.interface';
 import ContactMapMarker from './components/map/map-marker/contact-map-marker';
 import ContactCard from './components/events/contact-card';
 import { PhoneNumberInDb } from './interfaces/phone-number-in-db.interface';
+import { SelectOption } from './types/select-option.type';
+import InlineLoader from './components/loaders/inline/inline-loader';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -53,6 +55,7 @@ export default function Home() {
 	>(null);
 	const [events, setEvents] = useState<EventData[]>([]);
 	const [eventsBackup, setEventsBackup] = useState<EventData[]>([]);
+	const [isEventsLoading, setIsEventsLoading] = useState<boolean>(true);
 
 	const [feedbackStatus, setFeedbackStatus] = useState<RequestStatus>('idle');
 	const [feedbackText, setFeedbackText] = useState<string>('');
@@ -95,7 +98,7 @@ export default function Home() {
 	const [shouldModifyUserLocation, setShouldModifyUserLocation] =
 		useState<boolean>(false);
 
-	const getEventType = (event: EventData): SelectOptions =>
+	const getEventType = (event: EventData): SelectOption =>
 		event?.colorId === '11'
 			? 'Hívandó'
 			: event?.colorId === '8'
@@ -489,12 +492,18 @@ export default function Home() {
 	};
 
 	const deleteContactByIndex = async (contact: Contact, index: number) => {
-		const res = await fetch(`/api/contacts/${contact.email}`, {
+		const res = await fetch(`/api/contacts/${contact.id}`, {
 			method: 'DELETE'
 		});
 
 		const data = res.json();
 		setContacts((oldConacts: Contact[]) => {
+			return oldConacts.filter((_: Contact, i: number) => i !== index);
+		});
+		setRenderedContacts((oldConacts: Contact[]) => {
+			return oldConacts.filter((_: Contact, i: number) => i !== index);
+		});
+		setFilterableContacts((oldConacts: Contact[]) => {
 			return oldConacts.filter((_: Contact, i: number) => i !== index);
 		});
 	};
@@ -504,7 +513,22 @@ export default function Home() {
 		originalContact: Contact,
 		index: number
 	) => {
-		const res = await fetch(`/api/contacts/${originalContact.email}`, {
+		if (contact.location?.locationName.length) {
+			const locationResponse = await fetch(
+				`https://api.mapbox.com/geocoding/v5/mapbox.places/${contact.location.locationName}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
+			);
+
+			const data = await locationResponse.json();
+			contact.location = {
+				...contact.location,
+				coordinates: {
+					longitude: data.features[0].center[0],
+					latitude: data.features[0].center[1]
+				}
+			};
+		}
+
+		const res = await fetch(`/api/contacts/${originalContact.id}`, {
 			method: 'PUT',
 			body: JSON.stringify(contact)
 		});
@@ -512,6 +536,18 @@ export default function Home() {
 		const data = await res.json();
 
 		setContacts((oldConacts: Contact[]) => {
+			return oldConacts.map((oldContact: Contact, i: number) =>
+				i !== index ? oldContact : contact
+			);
+		});
+
+		setRenderedContacts((oldConacts: Contact[]) => {
+			return oldConacts.map((oldContact: Contact, i: number) =>
+				i !== index ? oldContact : contact
+			);
+		});
+
+		setFilterableContacts((oldConacts: Contact[]) => {
 			return oldConacts.map((oldContact: Contact, i: number) =>
 				i !== index ? oldContact : contact
 			);
@@ -547,6 +583,7 @@ export default function Home() {
 					setEvents(currentEvents);
 					setEventsBackup(currentEvents);
 					setIsUpcomingEventsAreLoading(false);
+					setIsEventsLoading(false);
 				})
 				.catch(() => {
 					signOut({ redirect: false, callbackUrl: '/auth/login' });
@@ -609,14 +646,7 @@ export default function Home() {
 		}
 	}, [clickedMarkerData]);
 
-	type SelectOptions =
-		| 'Összes'
-		| 'Esemény'
-		| 'Hívandó'
-		| 'Kérdőív'
-		| 'Meglévő';
-
-	const options: SelectOptions[] = [
+	const options: SelectOption[] = [
 		'Összes',
 		'Esemény',
 		'Hívandó',
@@ -783,7 +813,7 @@ export default function Home() {
 		}
 	};
 
-	const getTypeColor = (option: SelectOptions): string => {
+	const getTypeColor = (option: SelectOption): string => {
 		if (option === 'Esemény') {
 			return 'bg-blue-400';
 		}
@@ -912,27 +942,34 @@ export default function Home() {
 					/>
 					<div className="mb-6 h-full w-full overflow-y-scroll lg:mb-5 lg:pb-12">
 						<div className=" p-2">
-							{events.length > 0
-								? events.map(
-										(event: EventData, index: number) => (
-											<EventCard
-												key={index}
-												eventData={event}
-												searchValue={searchInputValue}
-												onMarkerOpen={onMarkerOpen}
-												onUpdateButtonClick={() =>
-													openModal(event)
-												}
-											/>
-										)
-								  )
-								: null}
+							{events.length > 0 && !isEventsLoading ? (
+								events.map(
+									(event: EventData, index: number) => (
+										<EventCard
+											key={index}
+											eventData={event}
+											searchValue={searchInputValue}
+											onMarkerOpen={onMarkerOpen}
+											onUpdateButtonClick={() =>
+												openModal(event)
+											}
+										/>
+									)
+								)
+							) : eventFilter !== 'Meglévő' ? (
+								<div className="flex items-center justify-start gap-6">
+									<p className="text-lg">
+										Események betöltése
+									</p>
+									<InlineLoader />
+								</div>
+							) : null}
 
 							{eventFilter === 'Meglévő'
 								? renderedContacts.map(
 										(renderedContact: Contact) => (
 											<ContactCard
-												key={renderedContact.email}
+												key={renderedContact.id}
 												contact={renderedContact}
 												onMarkerOpen={onMarkerOpen}
 												searchValue={searchInputValue}

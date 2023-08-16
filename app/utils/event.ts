@@ -73,7 +73,7 @@ export const getEvents = async (
 	const res = await fetch(
 		`${BASE_CALENDAR_URL}/${email}/events?` +
 			new URLSearchParams({
-				maxResults: '200',
+				maxResults: '500',
 				timeMin: `${yearOfPreviousThirdMonth}-${monthOfPreviousThirdMonth}-${dayOfPreviousThirdMonth}T10:00:00-07:00`,
 				timeMax: `${yearOfTwoWeeksFromNow}-${monthOfTwoWeeksFromNow}-${dayOfTwoWeeksFromNow}T10:00:00-07:00`,
 				showDeleted: 'false',

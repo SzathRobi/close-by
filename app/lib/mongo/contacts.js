@@ -29,7 +29,6 @@ export async function getContacts() {
 
 		const result = await contacts
 			.find()
-			.limit(20)
 			.map((user) => ({ ...user, _id: user._id.toString() }))
 			.toArray();
 
@@ -49,29 +48,31 @@ export async function postContacts(bodyObject) {
 	}
 }
 
-export async function deleteContact(email) {
+export async function deleteContact(id) {
 	try {
 		await init();
 
-		await db.collection('contacts').deleteOne({ email });
+		await db.collection('contacts').deleteOne({ id });
 	} catch (error) {
 		return { error: 'Failed to delete contact' };
 	}
 }
 
-export async function updateContact(email, bodyObject) {
+export async function updateContact(id, bodyObject) {
 	try {
 		await init();
 
 		const setContact = {
 			$set: {
+				id: bodyObject.id,
 				name: bodyObject.name,
 				email: bodyObject.email,
-				phoneNumber: bodyObject.phoneNumber
+				phoneNumber: bodyObject.phoneNumber,
+				location: bodyObject.location
 			}
 		};
 
-		await db.collection('contacts').updateOne({ email }, setContact);
+		await db.collection('contacts').updateOne({ id }, setContact);
 	} catch (error) {
 		return { error: 'Failed to update contact' };
 	}

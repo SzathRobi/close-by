@@ -4,6 +4,7 @@ import { ContactLocation } from '@/app/interfaces/contact-location.interface';
 import { Contact } from '@/app/interfaces/contact.interface';
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid';
 import Button from '../../shared/button/button';
 import Input from '../../shared/input/input';
 
@@ -24,7 +25,13 @@ const AddContactForm = ({ addContact }: AddContactFormProps) => {
 	const onSubmit = async (event: any) => {
 		event.preventDefault();
 
+		if (email === '' && name === '' && phoneNumber === '') {
+			alert('A helyszín mezőn kívül legalább 1 mezőt tölts ki.');
+			return;
+		}
+
 		let newContact: Contact = {
+			id: uuidv4(),
 			email,
 			name,
 			phoneNumber,
@@ -106,11 +113,8 @@ const AddContactForm = ({ addContact }: AddContactFormProps) => {
 				/>
 			</div>
 			<div className="mb-2">
-				<h4>
-					Email<span className="text-red-700">*</span>
-				</h4>
+				<h4>Email</h4>
 				<Input
-					required
 					name="email"
 					value={email}
 					onChange={(event: any) => setEmail(event.target.value)}

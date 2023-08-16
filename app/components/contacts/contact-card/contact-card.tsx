@@ -30,6 +30,7 @@ const ContactCard = ({
 	deleteContactByIndex,
 	updateContactByIndex
 }: ContactCardProps) => {
+	const [originalId] = useState<string>(contact?.id ?? '');
 	const [originalName] = useState<string>(contact?.name ?? '');
 	const [originalEmail] = useState<string>(contact.email);
 	const [originalPhoneNumber] = useState<string>(contact?.phoneNumber ?? '');
@@ -49,7 +50,8 @@ const ContactCard = ({
 				name: originalName,
 				email: originalEmail,
 				phoneNumber: originalPhoneNumber,
-				location: originalLocation
+				location: originalLocation,
+				id: originalId
 			},
 			index
 		).then((data: any) => {
