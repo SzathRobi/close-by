@@ -33,6 +33,7 @@ import ContactCard from './components/events/contact-card';
 import { PhoneNumberInDb } from './interfaces/phone-number-in-db.interface';
 import { SelectOption } from './types/select-option.type';
 import InlineLoader from './components/loaders/inline/inline-loader';
+import FilterListBox from './components/shared/listbox/listbox';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -655,10 +656,13 @@ export default function Home() {
 	];
 
 	const [eventFilter, setEventFilter] = useState(options[0]);
+	const [selectedFilters, setSelectedFilters] = useState<SelectOption[]>([
+		'Összes'
+	]);
 
 	const updateEventFilter = () => {
-		if (eventFilter === 'Összes') {
-			setRenderedContacts([]);
+		if (selectedFilters[0] === 'Összes') {
+			setRenderedContacts([...contacts]);
 
 			if (searchInputValue.length === 0) {
 				setEvents([...eventsBackup]);
@@ -683,114 +687,24 @@ export default function Home() {
 			return;
 		}
 
-		if (eventFilter === 'Esemény') {
-			if (searchInputValue.length === 0) {
-				setEvents([
-					...eventsBackup.filter(
-						(eventData: EventData) =>
-							eventData?.colorId === undefined
-					)
-				]);
-				return;
+		const filterColorIds = selectedFilters.map((selectedFilter) => {
+			if (selectedFilter === 'Esemény') {
+				return undefined;
 			}
-
-			setEvents(
-				eventsBackup.filter(
-					(eventData: EventData) =>
-						(eventData?.location
-							?.toLocaleLowerCase()
-							.includes(searchInputValue.toLocaleLowerCase()) ||
-							eventData?.summary
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								) ||
-							eventData?.description
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								)) &&
-						eventData?.colorId === undefined
-				)
-			);
-
-			return;
-		}
-
-		if (eventFilter === 'Kérdőív') {
-			if (searchInputValue.length === 0) {
-				setEvents([
-					...eventsBackup.filter(
-						(eventData: EventData) => eventData?.colorId === '8'
-					)
-				]);
-				return;
+			if (selectedFilter === 'Hívandó') {
+				return '11';
 			}
-
-			setEvents(
-				eventsBackup.filter(
-					(eventData: EventData) =>
-						(eventData?.location
-							?.toLocaleLowerCase()
-							.includes(searchInputValue.toLocaleLowerCase()) ||
-							eventData?.summary
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								) ||
-							eventData?.description
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								)) &&
-						eventData?.colorId === '8'
-				)
-			);
-
-			return;
-		}
-
-		if (eventFilter === 'Hívandó') {
-			if (searchInputValue.length === 0) {
-				setEvents([
-					...eventsBackup.filter(
-						(eventData: EventData) => eventData?.colorId === '11'
-					)
-				]);
-				return;
+			if (selectedFilter === 'Kérdőív') {
+				return '8';
 			}
+			// if (selectedFilter === 'Meglévő') {
+			// 	return undefined; // ezt javítani kell
+			// }
+		});
 
-			setEvents(
-				eventsBackup.filter(
-					(eventData: EventData) =>
-						(eventData?.location
-							?.toLocaleLowerCase()
-							.includes(searchInputValue.toLocaleLowerCase()) ||
-							eventData?.summary
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								) ||
-							eventData?.description
-								?.toLocaleLowerCase()
-								.includes(
-									searchInputValue.toLocaleLowerCase()
-								)) &&
-						eventData?.colorId === '11'
-				)
-			);
-
-			return;
-		}
-
-		if (eventFilter === 'Meglévő') {
-			if (searchInputValue.length === 0) {
-				setEvents([]);
-				setRenderedContacts([...contacts]);
-				return;
-			}
-
-			setEvents([]);
+		if (!selectedFilters.includes('Meglévő')) {
+			setRenderedContacts([]);
+		} else {
 			setRenderedContacts(
 				contacts.filter(
 					(contact: Contact) =>
@@ -808,34 +722,30 @@ export default function Home() {
 							.includes(searchInputValue.toLocaleLowerCase())
 				)
 			);
-
-			return;
-		}
-	};
-
-	const getTypeColor = (option: SelectOption): string => {
-		if (option === 'Esemény') {
-			return 'bg-blue-400';
 		}
 
-		if (option === 'Hívandó') {
-			return 'bg-red-400';
-		}
-
-		if (option === 'Kérdőív') {
-			return 'bg-gray-400';
-		}
-
-		if (option === 'Meglévő') {
-			return 'bg-purple-300';
-		}
-
-		return 'bg-blue-400';
+		setEvents(
+			eventsBackup.filter(
+				(eventData: EventData) =>
+					(eventData?.location
+						?.toLocaleLowerCase()
+						.includes(searchInputValue.toLocaleLowerCase()) ||
+						eventData?.summary
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase()) ||
+						eventData?.description
+							?.toLocaleLowerCase()
+							.includes(searchInputValue.toLocaleLowerCase())) &&
+					filterColorIds.includes(
+						eventData?.colorId as '11' | '8' | undefined
+					)
+			)
+		);
 	};
 
 	useEffect(() => {
 		updateEventFilter();
-	}, [eventFilter]);
+	}, [selectedFilters]);
 
 	return (
 		<>
@@ -853,85 +763,10 @@ export default function Home() {
 							onSearchInputChange={onSearchInputChange}
 						/>
 						<div className="mb-8 w-full px-2">
-							<Listbox
-								value={eventFilter}
-								onChange={setEventFilter}
-							>
-								<div className="relative mt-1">
-									<Listbox.Button className="relative w-full cursor-default rounded-lg bg-blue-50 py-2 pl-3 pr-10 text-left shadow-md shadow-neutral-400 focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 sm:text-sm">
-										<span className="block truncate">
-											{eventFilter}
-										</span>
-										<span className="pointer-events-none absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-md bg-emerald-700 px-2">
-											<RiArrowUpDownLine
-												className="h-5 w-5 text-white"
-												aria-hidden="true"
-											/>
-										</span>
-									</Listbox.Button>
-									<Transition
-										as={Fragment}
-										leave="transition ease-in duration-100"
-										leaveFrom="opacity-100"
-										leaveTo="opacity-0"
-									>
-										<Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-											{options.map((option, index) => (
-												<Listbox.Option
-													key={index}
-													className={({ active }) =>
-														`relative cursor-default select-none py-2 pl-10 pr-4 ${
-															active
-																? 'bg-emerald-100 text-emerald-900'
-																: 'text-gray-900'
-														}`
-													}
-													value={option}
-												>
-													{({ selected }) => (
-														<>
-															<span
-																className={`block truncate ${
-																	selected
-																		? 'font-medium'
-																		: 'font-normal'
-																}`}
-															>
-																{option}
-															</span>
-															{index ===
-															0 ? null : index ===
-															  4 ? (
-																<div className="absolute top-2.5 right-4 rounded">
-																	<FaUser
-																		size={
-																			12
-																		}
-																	/>
-																</div>
-															) : (
-																<div
-																	className={`absolute top-2.5 right-4 h-4 w-4 rounded ${getTypeColor(
-																		option
-																	)}`}
-																></div>
-															)}
-															{selected ? (
-																<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-emerald-600">
-																	<FaCheck
-																		className="h-5 w-5"
-																		aria-hidden="true"
-																	/>
-																</span>
-															) : null}
-														</>
-													)}
-												</Listbox.Option>
-											))}
-										</Listbox.Options>
-									</Transition>
-								</div>
-							</Listbox>
+							<FilterListBox
+								selectedFilters={selectedFilters}
+								setSelectedFilters={setSelectedFilters}
+							/>
 						</div>
 					</div>
 					<Button
@@ -956,7 +791,7 @@ export default function Home() {
 										/>
 									)
 								)
-							) : eventFilter !== 'Meglévő' ? (
+							) : !selectedFilters.includes('Meglévő') ? (
 								<div className="flex items-center justify-start gap-6">
 									<p className="text-lg">
 										Események betöltése
@@ -965,7 +800,7 @@ export default function Home() {
 								</div>
 							) : null}
 
-							{eventFilter === 'Meglévő'
+							{selectedFilters.includes('Meglévő')
 								? renderedContacts.map(
 										(renderedContact: Contact) => (
 											<ContactCard
@@ -979,7 +814,8 @@ export default function Home() {
 								: null}
 
 							{/* NEARBY LOCATIONS */}
-							{nearbyLocations && eventFilter !== 'Meglévő' ? (
+							{nearbyLocations &&
+							!selectedFilters.includes('Meglévő') ? (
 								<h4 className="mt-12 mb-16 rounded bg-gray-200 p-4 text-3xl font-semibold">
 									Események a közelben
 								</h4>
@@ -1101,9 +937,10 @@ export default function Home() {
 									) : null
 								)}
 
-						{contacts.length &&
-						(eventFilter === 'Meglévő' || eventFilter === 'Összes')
-							? contacts.map((contact: Contact, index) =>
+						{renderedContacts.length &&
+						(selectedFilters.includes('Meglévő') ||
+							selectedFilters.includes('Összes'))
+							? renderedContacts.map((contact: Contact, index) =>
 									contact.location?.coordinates?.latitude ? (
 										<ContactMapMarker
 											key={index}
