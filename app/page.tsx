@@ -368,7 +368,8 @@ export default function Home() {
 		);
 
 		const filteredEventsOfTwoWeeksFromNow = eventsOfTwoWeeksFromNow.filter(
-			(eventData: EventData) => eventData?.colorId === undefined
+			(eventData: EventData) =>
+				eventData?.colorId === undefined || eventData?.colorId === '7'
 		);
 
 		return [
