@@ -16,18 +16,18 @@ const ModifyUserLocationForm = ({
 		<div className="p-2">
 			<div className="mb-4 flex items-center justify-end">
 				<button
-					className="text-gray-500 hover:text-gray-700 transition-colors"
+					className="text-gray-500 transition-colors hover:text-gray-700"
 					onClick={() => closeLocationModifyModal()}
 				>
 					<MdClose size={24} />
 				</button>
 			</div>
 			<form
-				className="bg-white rounded mb-2"
+				className="mb-2 rounded bg-white"
 				onSubmit={(event: any) => onModifyUserLocationSubmit(event)}
 			>
 				<div className="mb-6">
-					<p className="font-medium mb-4">
+					<p className="mb-4 font-medium">
 						Új helyszín<span className="text-red-700">*</span>:
 					</p>
 					<Input name="location" required />
