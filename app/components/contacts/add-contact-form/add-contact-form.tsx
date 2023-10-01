@@ -2,6 +2,7 @@
 
 import { ContactLocation } from '@/app/interfaces/contact-location.interface';
 import { Contact } from '@/app/interfaces/contact.interface';
+import MapboxAutocomplete from 'react-mapbox-autocomplete';
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
@@ -38,64 +39,38 @@ const AddContactForm = ({ addContact }: AddContactFormProps) => {
 			location
 		};
 
-		if (location?.locationName.length) {
-			const response = await fetch(
-				`https://api.mapbox.com/geocoding/v5/mapbox.places/${location.locationName}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
-			);
+		let res = await fetch('/api/contacts', {
+			method: 'POST',
+			body: JSON.stringify(newContact)
+		});
+		res = await res.json();
 
-			const data = await response.json();
+		addContact(newContact);
 
-			setLocation({
-				...location,
-				coordinates: {
-					longitude: data.features[0].center[0],
-					latitude: data.features[0].center[1]
-				}
-			});
+		setName('');
+		setEmail('');
+		setPhoneNumber('');
+		setLocation({
+			locationName: '',
+			coordinates: undefined
+		});
+	};
 
-			newContact = {
-				...newContact,
-				location: {
-					locationName: location.locationName,
-					coordinates: {
-						longitude: data.features[0].center[0],
-						latitude: data.features[0].center[1]
-					}
-				}
-			};
+	const suggestionSelect = (
+		result: string,
+		lat: number,
+		lng: number,
+		text: string
+	) => {
+		const newLocation: ContactLocation = {
+			locationName: text,
+			coordinates: {
+				latitude: lat.toString(),
+				longitude: lng.toString()
+			}
+		};
 
-			let res = await fetch('/api/contacts', {
-				method: 'POST',
-				body: JSON.stringify(newContact)
-			});
-			res = await res.json();
-
-			addContact(newContact);
-
-			setName('');
-			setEmail('');
-			setPhoneNumber('');
-			setLocation({
-				locationName: '',
-				coordinates: undefined
-			});
-		} else {
-			let res = await fetch('/api/contacts', {
-				method: 'POST',
-				body: JSON.stringify(newContact)
-			});
-			res = await res.json();
-
-			addContact(newContact);
-
-			setName('');
-			setEmail('');
-			setPhoneNumber('');
-			setLocation({
-				locationName: '',
-				coordinates: undefined
-			});
-		}
+		setLocation(newLocation);
 	};
 
 	return (
@@ -132,15 +107,13 @@ const AddContactForm = ({ addContact }: AddContactFormProps) => {
 			</div>
 			<div className="mb-2">
 				<h4>Helyszín</h4>
-				<Input
-					name="location"
-					value={location?.locationName}
-					onChange={(event: any) =>
-						setLocation({
-							coordinates: undefined,
-							locationName: event.target.value
-						})
-					}
+				<MapboxAutocomplete
+					publicKey={process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}
+					inputClass="mb-1 w-full rounded p-2 shadow-md shadow-neutral-400"
+					onSuggestionSelect={suggestionSelect}
+					country="hu"
+					resetSearch={false}
+					query={location?.locationName}
 				/>
 			</div>
 

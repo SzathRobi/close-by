@@ -2,6 +2,7 @@
 
 import { RiDeleteBin6Line } from 'react-icons/ri';
 import { ChangeEvent, useEffect, useState } from 'react';
+import MapboxAutocomplete from 'react-mapbox-autocomplete';
 import { Attendant } from '@/app/interfaces/attendant.interface';
 import { EventData } from '@/app/interfaces/event-data.interface';
 
@@ -23,6 +24,7 @@ import {
 	postPhoneNumber,
 	updatePhoneNumberByCalendarEventId
 } from '@/app/utils/phone-number';
+import { ContactLocation } from '@/app/interfaces/contact-location.interface';
 
 interface EventFormProps {
 	calendarEvent?: EventData;
@@ -66,6 +68,7 @@ const EventForm = ({
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [phoneNumber, setPhoneNumber] = useState<string>('');
+	const [location, setLocation] = useState<ContactLocation | null>(null);
 
 	useEffect(() => {
 		setComments(commentsFromDb);
@@ -86,6 +89,8 @@ const EventForm = ({
 		if (selectedEvent && selectedEvent.phoneNumber) {
 			setPhoneNumber(selectedEvent.phoneNumber.phoneNumber);
 		}
+
+		console.log('selectedEvent:', selectedEvent);
 	}, [selectedEvent]);
 
 	const getEventType = (event: EventData): EventType => {
@@ -142,17 +147,11 @@ const EventForm = ({
 		setIsSubmitting(true);
 		setFeedbackStatus('loading');
 
-		const response = await fetch(
-			`https://api.mapbox.com/geocoding/v5/mapbox.places/${event.target.location.value}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
-		);
-
-		const data = await response.json();
-
 		const newEvent: Partial<EventData> = {
 			colorId: getColorId(selectValue.color) || undefined,
 			summary: event.target.title.value,
 			description: event.target.description.value,
-			location: event.target.location.value,
+			location: location?.locationName,
 			start: {
 				dateTime: `${event.target.start.value}:00`,
 				timeZone: 'Europe/Budapest'
@@ -172,8 +171,8 @@ const EventForm = ({
 				  }
 				: undefined,
 			coordinates: {
-				long: data.features[0].center[0],
-				lat: data.features[0].center[1]
+				long: Number(location?.coordinates?.longitude),
+				lat: Number(location?.coordinates?.latitude)
 			}
 		};
 
@@ -303,6 +302,31 @@ const EventForm = ({
 		});
 	};
 
+	const suggestionSelect = (
+		result: string,
+		lat: number,
+		lng: number,
+		text: string
+	) => {
+		const newLocation: ContactLocation = {
+			locationName: text,
+			coordinates: {
+				latitude: lat.toString(),
+				longitude: lng.toString()
+			}
+		};
+
+		setLocation(newLocation);
+
+		if (selectedEvent) {
+			setSelectedEvent({
+				...selectedEvent,
+				location: text,
+				coordinates: { long: lng, lat }
+			});
+		}
+	};
+
 	return (
 		<form
 			className="py-8"
@@ -425,19 +449,14 @@ const EventForm = ({
 				<h3 className="mb-2 font-medium">
 					Helyszín<span className="text-red-700">*</span>:
 				</h3>
-				<Input
-					required
-					name="location"
-					value={selectedEvent ? selectedEvent.location : undefined}
-					onChange={
-						selectedEvent
-							? (event: any) =>
-									setSelectedEvent({
-										...selectedEvent,
-										location: event.target.value
-									})
-							: null
-					}
+				<MapboxAutocomplete
+					publicKey={process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}
+					inputClass="mb-1 w-full rounded p-2 shadow-md shadow-neutral-400"
+					onSuggestionSelect={suggestionSelect}
+					country="hu"
+					resetSearch={false}
+					query={selectedEvent ? selectedEvent.location : undefined}
+					placeholder="Nincs megadva"
 				/>
 			</div>
 			<div className="mb-6">

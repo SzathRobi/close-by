@@ -17,7 +17,8 @@ const handler = async (request, response) => {
 		try {
 			let bodyObject = JSON.parse(request.body);
 			let myContact = await postContacts(bodyObject);
-			response.json(myContact.ops[0]);
+
+			response.json(myContact.insertedId);
 		} catch (error) {
 			return response.status(500).json({ error: error.message });
 		}

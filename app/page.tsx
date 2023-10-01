@@ -34,6 +34,7 @@ import { PhoneNumberInDb } from './interfaces/phone-number-in-db.interface';
 import { SelectOption } from './types/select-option.type';
 import InlineLoader from './components/loaders/inline/inline-loader';
 import FilterListBox from './components/shared/listbox/listbox';
+import { ContactLocation } from './interfaces/contact-location.interface';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -477,16 +478,16 @@ export default function Home() {
 		);
 	};
 
-	const updateContactLocation = (event: any, index: number) => {
+	const updateContactLocation = (
+		location: ContactLocation,
+		index: number
+	) => {
 		setContacts(
 			contacts.map((contact: Contact, innerIndex: number) =>
 				index === innerIndex
 					? {
 							...contact,
-							location: {
-								...location,
-								locationName: event.target.value
-							}
+							location
 					  }
 					: contact
 			)
@@ -515,20 +516,10 @@ export default function Home() {
 		originalContact: Contact,
 		index: number
 	) => {
-		if (contact.location?.locationName.length) {
-			const locationResponse = await fetch(
-				`https://api.mapbox.com/geocoding/v5/mapbox.places/${contact.location.locationName}.json?access_token=${process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}`
-			);
-
-			const data = await locationResponse.json();
-			contact.location = {
-				...contact.location,
-				coordinates: {
-					longitude: data.features[0].center[0],
-					latitude: data.features[0].center[1]
-				}
-			};
-		}
+		console.log(
+			'contact.location?.locationName:',
+			contact.location?.locationName
+		);
 
 		const res = await fetch(`/api/contacts/${originalContact.id}`, {
 			method: 'PUT',
@@ -746,7 +737,7 @@ export default function Home() {
 
 	useEffect(() => {
 		updateEventFilter();
-	}, [selectedFilters]);
+	}, [selectedFilters, contacts]);
 
 	return (
 		<>

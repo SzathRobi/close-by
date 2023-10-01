@@ -2,6 +2,7 @@
 
 import { ContactLocation } from '@/app/interfaces/contact-location.interface';
 import { Contact } from '@/app/interfaces/contact.interface';
+import MapboxAutocomplete from 'react-mapbox-autocomplete';
 import { useState } from 'react';
 import { FaCheck, FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { MdClose } from 'react-icons/md';
@@ -38,6 +39,8 @@ const ContactCard = ({
 		contact?.location ?? undefined
 	);
 
+	const [location, setLocation] = useState<ContactLocation | null>(null);
+
 	const [modifyButtonIcon, setModifyButtonIcon] = useState(<FaPencilAlt />);
 	const [deleteButtonIcon, setDeleteButtonIcon] = useState(<FaTrash />);
 
@@ -45,7 +48,7 @@ const ContactCard = ({
 		setModifyButtonIcon(<InlineLoader size={16} />);
 
 		updateContactByIndex(
-			contact,
+			location ? { ...contact, location } : contact,
 			{
 				name: originalName,
 				email: originalEmail,
@@ -60,6 +63,7 @@ const ContactCard = ({
 			}, 1000);
 
 			if (data.success) {
+				updateContactLocation(location, index);
 				setModifyButtonIcon(<FaCheck />);
 			} else {
 				setModifyButtonIcon(<MdClose />);
@@ -77,6 +81,23 @@ const ContactCard = ({
 
 			setDeleteButtonIcon(<FaCheck />);
 		});
+	};
+
+	const suggestionSelect = (
+		result: string,
+		lat: number,
+		lng: number,
+		text: string
+	) => {
+		const newLocation: ContactLocation = {
+			locationName: text,
+			coordinates: {
+				latitude: lat.toString(),
+				longitude: lng.toString()
+			}
+		};
+
+		setLocation(newLocation);
 	};
 
 	return (
@@ -118,6 +139,19 @@ const ContactCard = ({
 					onChange={(event: any) =>
 						updateContactLocation(event, index)
 					}
+				/>
+			</div>
+
+			<div className="mb-4">
+				<h4>Helyszín</h4>
+				<MapboxAutocomplete
+					publicKey={process.env.NEXT_PUBLIC_MAPBOX_GL_ACCESS_TOKEN}
+					inputClass="mb-1 w-full rounded p-2 shadow-md shadow-neutral-400"
+					onSuggestionSelect={suggestionSelect}
+					country="hu"
+					resetSearch={false}
+					query={contact.location?.locationName}
+					placeholder="Nincs megadva"
 				/>
 			</div>
 
