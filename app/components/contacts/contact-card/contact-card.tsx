@@ -130,17 +130,6 @@ const ContactCard = ({
 					}
 				/>
 			</div>
-			<div className="mb-4">
-				<h4>Helyszín</h4>
-				<Input
-					placeholder="Nincs megadva"
-					name={`contact-location-${index}`}
-					value={contact.location?.locationName}
-					onChange={(event: any) =>
-						updateContactLocation(event, index)
-					}
-				/>
-			</div>
 
 			<div className="mb-4">
 				<h4>Helyszín</h4>
